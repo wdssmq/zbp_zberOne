@@ -47,9 +47,13 @@ function zberOne_a($href, $title, $text = "")
 }
 function InstallPlugin_zberOne()
 {
+  global $zbp;
+  $zbp->BuildTemplate();
 }
 function UninstallPlugin_zberOne()
 {
+  global $zbp;
+  $zbp->BuildTemplate();
 }
 
 function zberOne_Check()
