@@ -4,18 +4,11 @@ RegisterPlugin("zberOne", "ActivePlugin_zberOne");
 
 function ActivePlugin_zberOne()
 {
-  Add_Filter_Plugin('Filter_Plugin_Cmd_Ajax', 'zberOne_Ajax');
   Add_Filter_Plugin('Filter_Plugin_Zbp_BuildTemplate', 'zberOne_Temp');
 }
 function zberOne_Temp(&$templates)
 {
   $templates['footer'] = str_replace('{$footer}', '{$footer}' .  '<script src="' . zberOne_Path("script", "host") . '"></script>', $templates['footer']);
-}
-function zberOne_Ajax($src)
-{
-  global $zbp;
-  if ($src === "cmt2rss") {
-  }
 }
 function zberOne_Path($file, $t = 'path')
 {
@@ -47,8 +40,8 @@ function zberOne_a($href, $title, $text = "")
 }
 function InstallPlugin_zberOne()
 {
-  global $zbp;
-  $zbp->BuildTemplate();
+  // global $zbp;
+  // $zbp->BuildTemplate();
 }
 function UninstallPlugin_zberOne()
 {

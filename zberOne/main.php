@@ -16,6 +16,14 @@ $blogtitle = '一个zblog插件';
 require $blogpath . 'zb_system/admin/admin_header.php';
 require $blogpath . 'zb_system/admin/admin_top.php';
 ?>
+<style>
+  p {
+    font-size: 16px;
+  }
+  p:not(:last-child) {
+    margin-bottom: .3em;
+  }
+</style>
 <div id="divMain">
   <div class="divHeader"><?php echo $blogtitle; ?><small><a title="刷新" href="main.php" style="font-size: 16px;display: inline-block;margin-left: 5px;">刷新</a></div>
   <div class="SubMenu"></small>
@@ -25,6 +33,8 @@ require $blogpath . 'zb_system/admin/admin_top.php';
     <p>群 号：859347813</p>
     <p>链接：<?php echo zberOne_a("https://jq.qq.com/?_wv=1027&k=Ot3DJ5Xv", "一个zblog用户群"); ?></p>
     <p>验证：<?php echo zberOne_Check(); ?></p>
+    <p><b>↑↑请自己Debug出这个验证码为什么不会显示，这个QQ群其实不重要。</b></p>
+    <p>------</p>
     <h3>代码的重要本质是`证明`，然而人生更主要而又无奈的组成是`认为`！！！</h3>
     <p>
       推荐部动画电影：颠倒的帕特玛_番剧_bilibili_哔哩哔哩
@@ -55,9 +65,8 @@ require $blogpath . 'zb_system/admin/admin_top.php';
     <p>或者</p>
     <p>[申请解封][QQ群]：群昵称</p>
     <p><s>群昵称和feeds.pub账号统一更容易通过</s>，人工确认太麻烦所以划掉，写代码也很麻烦。</p>
-    <p>需附图：（任意web或客户端RSS阅读器均可）</p>
+    <p><b>需附图：（任意web或客户端RSS阅读器均可）</b></p>
     <p><img src="doc/001.png" alt="截图"></p>
-
   </div>
 </div>
 
