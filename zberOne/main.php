@@ -47,24 +47,29 @@ require $blogpath . 'zb_system/admin/admin_top.php';
       Z-Blog相关资讯RSS订阅
       <a href="https://bbs.zblogcn.com/thread-100631.html" target="_blank" title="Z-Blog相关资讯RSS订阅">https://bbs.zblogcn.com/thread-100631.html</a> ←使用其他阅读器的可以在这里查看源地址
     </p>
+    <p><b>↓↓以下三个都需要订阅</b></p>
     <p>
       zblog贴吧订阅：<?php echo zberOne_a("https://feeds.pub/feed/https%3A%2F%2Frsshub.app%2Ftieba%2Fforum%2Fzblog", "zblog贴吧"); ?> ← 非产出型的贴子建议发在贴吧里
     </p>
     <p>
-      应用中心订阅：<?php echo zberOne_a("https://feeds.pub/feed/https%3A%2F%2Fapp.zblogcn.com%2Ffeed.php", "应用中心"); ?>
-    </p>
-    <p>
       zblog论坛订阅：<?php echo zberOne_a("https://feeds.pub/feed/https%3A%2F%2Fbbs.zblogcn.com%2Findex-0.html%3Frss%3D1", "zblog论坛"); ?>
     </p>
+    <p>
+      应用中心订阅：<?php echo zberOne_a("https://feeds.pub/feed/https%3A%2F%2Fapp.zblogcn.com%2Ffeed.php", "应用中心"); ?>
+    </p>
+    <p><b>↑↑以上三个都需要订阅</b></p>
+    <p><b>也可一键订阅这个组合包：</b></p>
+    <p>zblog玩家：<a href="https://www.innoreader.com/bundle/0014cd640d60" target="_blank" title="zblog玩家">https://www.innoreader.com/bundle/0014cd640d60</a></p>
     <p>----</p>
     <p>0、大部分只是禁言而非直接踢掉的基本是因为没正确标注z-blog版权。<b>你想让人看到你的站，而我确实看到了，并用相应的行动证明我看到了，仅此而已。</b></p>
     <p>1、[注册feeds.pub并订阅上边源]。（并不限于这个RSS阅读器，Feedly，Inoreader等都可以，手机可以用Rolly）</p>
     <p>2、按如下格式在<a href="https://tieba.baidu.com/f?kw=zblog&ie=utf-8" target="_blank" title="zblog吧-百度贴吧">[zblog吧-百度贴吧]</a>发贴</p>
+    <p><b>3、因擅自分享应用等原因造成的封号不予解封；</b></p>
     <p>标题：</p>
     <p>[申请解封][zblog论坛]：论坛名</p>
     <p>或者</p>
     <p>[申请解封][QQ群]：群昵称</p>
-    <p><s>群昵称和feeds.pub账号统一更容易通过</s>，人工确认太麻烦所以划掉，写代码也很麻烦。</p>
+    <p>建议注册feeds.pub的账号和你要解封的账号、昵称有相似性，相同或者拼音，便于查证。</p>
     <p><b>需附图：（任意web或客户端RSS阅读器均可）</b></p>
     <p><img src="doc/001.png" alt="截图"></p>
   </div>
