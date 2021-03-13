@@ -81,7 +81,7 @@ function zberOne_Http()
   if ($http->status == 200) {
     $s = $http->responseText;
     if ($data = json_decode($s)) {
-      $int = intval($data->watchers / 11);
+      $int = 100 + intval($data->watchers / 37);
       return $int;
     }
   }

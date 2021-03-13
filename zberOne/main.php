@@ -20,50 +20,74 @@ require $blogpath . 'zb_system/admin/admin_top.php';
   p {
     font-size: 16px;
   }
+
   p:not(:last-child) {
     margin-bottom: .3em;
   }
+
+  blockquote {
+    padding-left: .7rem;
+    border-left: 3px solid #999;
+    margin-left: .2rem;
+  }
+
+  hr {
+    background-color: #f5f5f5;
+    border: none;
+    display: block;
+    height: 2px;
+    margin: 1.5rem 0;
+    visibility: visible;
+  }
 </style>
 <div id="divMain">
-  <div class="divHeader"><?php echo $blogtitle; ?><small><a title="刷新" href="main.php" style="font-size: 16px;display: inline-block;margin-left: 5px;">刷新</a></div>
+  <div class="divHeader">
+    <?php echo $blogtitle; ?>
+    <small><a title="刷新" href="javascript:;" onclick="location.reload();" style="font-size: 16px;display: inline-block;margin-left: 5px;">刷新</a></small>
+  </div>
   <div class="SubMenu"></small>
   </div>
   <div id="divMain2">
+    <h3> 一个QQ群</h3>
     <p>群名称：一个zblog用户群</p>
     <p>群 号：859347813</p>
-    <p>链接：<?php echo zberOne_a("https://jq.qq.com/?_wv=1027&k=Ot3DJ5Xv", "一个zblog用户群"); ?></p>
-    <p>验证：<?php echo zberOne_Check(); ?></p>
-    <p><b>↑↑请自己Debug出这个验证码为什么不会显示，这个QQ群其实不重要。</b></p>
-    <p>------</p>
-    <h3>代码的重要本质是`证明`，然而人生更主要而又无奈的组成是`认为`！！！</h3>
-    <p>
-      推荐部动画电影：颠倒的帕特玛_番剧_bilibili_哔哩哔哩
-      <a href="https://www.bilibili.com/bangumi/play/ss3668" target="_blank" title="颠倒的帕特玛：第1话_番剧_bilibili_哔哩哔哩">https://www.bilibili.com/bangumi/play/ss3668</a></p>
-    <p>-------</p>
+    <p>用 途：用于账号解封申请和开发者初审</p>
+    <p>链 接：<?php echo zberOne_a("https://jq.qq.com/?_wv=1027&k=Ot3DJ5Xv", "一个zblog用户群"); ?></p>
+    <p>验 证：<?php echo zberOne_Check(); ?></p>
+    <p><b>↑↑请自己Debug出这个验证码为什么不会显示。</b></p>
+    <hr>
     <p>
       插件地址：<?php echo zberOne_a("https://app.zblogcn.com/?id=15575", "一个zblog插件"); ?>
     </p>
+    <blockquote>
+      <h3>代码的重要本质是`证明`，然而人生更主要而又无奈的组成是`认为`！！！</h3>
+      <p>
+        推荐部动画电影：颠倒的帕特玛_番剧_bilibili_哔哩哔哩
+        <a href="https://www.bilibili.com/bangumi/play/ss3668" target="_blank" title="颠倒的帕特玛：第1话_番剧_bilibili_哔哩哔哩">https://www.bilibili.com/bangumi/play/ss3668</a>
+      </p>
+    </blockquote>
+    <hr>
+    <h3>开发者申请</h3>
+    <p>论坛发贴规范（申请开发者也先看这里）-论坛事务-ZBlogger技术交流中心</p>
+    <p><a href="https://bbs.zblogcn.com/thread-102989.html" target="_blank" title="论坛发贴规范（申请开发者也先看这里）-论坛事务-ZBlogger技术交流中心">https://bbs.zblogcn.com/thread-102989.html</a></p>
+    <h3>解封申请</h3>
     <p>
       Z-Blog相关资讯RSS订阅
       <a href="https://bbs.zblogcn.com/thread-100631.html" target="_blank" title="Z-Blog相关资讯RSS订阅">https://bbs.zblogcn.com/thread-100631.html</a> ←使用其他阅读器的可以在这里查看源地址
     </p>
-    <p><b>↓↓以下三个都需要订阅</b></p>
-    <p>
-      zblog贴吧订阅：<?php echo zberOne_a("https://feeds.pub/feed/https%3A%2F%2Frsshub.app%2Ftieba%2Fforum%2Fzblog", "zblog贴吧"); ?> ← 非产出型的贴子建议发在贴吧里
-    </p>
+    <p><b>↓↓注册并订阅，不需要手机验证；</b></p>
     <p>
       zblog论坛订阅：<?php echo zberOne_a("https://feeds.pub/feed/https%3A%2F%2Fbbs.zblogcn.com%2Findex-0.html%3Frss%3D1", "zblog论坛"); ?>
     </p>
     <p>
       应用中心订阅：<?php echo zberOne_a("https://feeds.pub/feed/https%3A%2F%2Fapp.zblogcn.com%2Ffeed.php", "应用中心"); ?>
     </p>
-    <p><b>↑↑以上三个都需要订阅</b></p>
-    <p><b>也可一键订阅这个组合包：</b></p>
     <p>zblog玩家：<a href="https://www.innoreader.com/bundle/0014cd640d60" target="_blank" title="zblog玩家">https://www.innoreader.com/bundle/0014cd640d60</a></p>
+    <p><b>↑↑注册并订阅，不需要手机验证；</b></p>
     <p>----</p>
     <p>0、大部分只是禁言而非直接踢掉的基本是因为没正确标注z-blog版权。<b>你想让人看到你的站，而我确实看到了，并用相应的行动证明我看到了，仅此而已。</b></p>
-    <p>1、[注册feeds.pub并订阅上边源]。（并不限于这个RSS阅读器，Feedly，Inoreader等都可以，手机可以用Rolly）</p>
-    <p>2、按如下格式在<a href="https://tieba.baidu.com/f?kw=zblog&ie=utf-8" target="_blank" title="zblog吧-百度贴吧">[zblog吧-百度贴吧]</a>发贴</p>
+    <p>1、[注册「feeds.pub」并订阅上边源]。（并不限于这个RSS阅读器，Feedly，Inoreader等都可以，手机可以用Rolly）</p>
+    <p>2、加QQ群附图；</p>
     <p><b>3、因擅自分享应用等原因造成的封号不予解封；</b></p>
     <p>标题：</p>
     <p>[申请解封][zblog论坛]：论坛名</p>
