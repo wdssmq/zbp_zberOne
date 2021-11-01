@@ -48,13 +48,13 @@ require $blogpath . 'zb_system/admin/admin_top.php';
   <div class="SubMenu"></small>
   </div>
   <div id="divMain2">
-    <h3> 一个QQ群</h3>
-    <p>群名称：一个zblog用户群</p>
+    <h3> 一个 QQ 群</h3>
+    <p>群名称：一个 zblog 用户群</p>
     <p>群 号：859347813</p>
     <p>用 途：用于账号解封申请和开发者初审</p>
     <p>链 接：<?php echo zberOne_a("https://jq.qq.com/?_wv=1027&k=Ot3DJ5Xv", "一个zblog用户群"); ?></p>
     <p>验 证：<?php echo zberOne_Check(); ?></p>
-    <p><b>↑↑请自己Debug出这个验证码为什么不会显示。</b></p>
+    <p><b>↑↑请自己 Debug 出这个验证码为什么不会显示。</b></p>
     <hr>
     <p>
       插件地址：<?php echo zberOne_a("https://app.zblogcn.com/?id=15575", "一个zblog插件"); ?>
@@ -67,34 +67,32 @@ require $blogpath . 'zb_system/admin/admin_top.php';
       </p>
     </blockquote>
     <hr>
-    <h3>开发者申请</h3>
-    <p>论坛发贴规范（申请开发者也先看这里）-论坛事务-ZBlogger技术交流中心</p>
-    <p><a href="https://bbs.zblogcn.com/thread-102989.html" target="_blank" title="论坛发贴规范（申请开发者也先看这里）-论坛事务-ZBlogger技术交流中心">https://bbs.zblogcn.com/thread-102989.html</a></p>
+    <!-- <h3>开发者申请</h3> -->
+    <!-- <p>论坛发贴规范（申请开发者也先看这里）-论坛事务-ZBlogger技术交流中心</p> -->
+    <!-- <p><a href="https://bbs.zblogcn.com/thread-102989.html" target="_blank" title="论坛发贴规范（申请开发者也先看这里）-论坛事务-ZBlogger技术交流中心">https://bbs.zblogcn.com/thread-102989.html</a></p> -->
     <h3>解封申请</h3>
     <p>
-      Z-Blog相关资讯RSS订阅
-      <a href="https://bbs.zblogcn.com/thread-100631.html" target="_blank" title="Z-Blog相关资讯RSS订阅">https://bbs.zblogcn.com/thread-100631.html</a> ←使用其他阅读器的可以在这里查看源地址
+      Z-Blog 相关资讯 RSS 订阅
+      <a href="https://bbs.zblogcn.com/thread-100631.html" target="_blank" title="Z-Blog 相关资讯 RSS 订阅">https://bbs.zblogcn.com/thread-100631.html</a> ←使用其他阅读器的可以在这里查看源地址
     </p>
     <p><b>↓↓注册并订阅，不需要手机验证；</b></p>
     <p>
-      zblog论坛订阅：<?php echo zberOne_a("https://feeds.pub/feed/https%3A%2F%2Fbbs.zblogcn.com%2Findex-0.html%3Frss%3D1", "zblog论坛"); ?>
+      zblog 论坛订阅：<?php echo zberOne_a("https://feeds.pub/feed/https%3A%2F%2Fbbs.zblogcn.com%2Findex-0.html%3Frss%3D1", "zblog 论坛"); ?>
     </p>
     <p>
       应用中心订阅：<?php echo zberOne_a("https://feeds.pub/feed/https%3A%2F%2Fapp.zblogcn.com%2Ffeed.php", "应用中心"); ?>
     </p>
-    <p>zblog玩家：<a href="https://www.innoreader.com/bundle/0014cd640d60" target="_blank" title="zblog玩家">https://www.innoreader.com/bundle/0014cd640d60</a></p>
+    <!-- <p>
+      zblog 玩家：<a href="https://www.innoreader.com/bundle/0014cd640d60" target="_blank" title="zblog 玩家">https://www.innoreader.com/bundle/0014cd640d60</a>
+    </p> -->
     <p><b>↑↑注册并订阅，不需要手机验证；</b></p>
     <p>----</p>
-    <p>0、大部分只是禁言而非直接踢掉的基本是因为没正确标注z-blog版权。<b>你想让人看到你的站，而我确实看到了，并用相应的行动证明我看到了，仅此而已。</b></p>
-    <p>1、[注册「feeds.pub」并订阅上边源]。（并不限于这个RSS阅读器，Feedly，Inoreader等都可以，手机可以用Rolly）</p>
-    <p>2、加QQ群附图；</p>
+    <p>0、大部分只是禁言而非直接踢掉的基本是因为没正确标注 z-blog 版权。<b>你想让人看到你的站，而我确实看到了，并用相应的行动证明我看到了，仅此而已。</b></p>
+    <p>1、注册「feeds.pub」并订阅上边源。（并不限于这个 RSS 阅读器，Feedly，Inoreader等都可以，手机可以用 Rolly）</p>
+    <p>2、加 QQ 群附图；</p>
     <p><b>3、因擅自分享应用等原因造成的封号不予解封；</b></p>
-    <p>标题：</p>
-    <p>[申请解封][zblog论坛]：论坛名</p>
-    <p>或者</p>
-    <p>[申请解封][QQ群]：群昵称</p>
-    <p>建议注册feeds.pub的账号和你要解封的账号、昵称有相似性，相同或者拼音，便于查证。</p>
-    <p><b>需附图：（任意web或客户端RSS阅读器均可）</b></p>
+    <p>----</p>
+    <p><b>需附图：（任意 web 或客户端 RSS 阅读器均可）</b></p>
     <p><img src="doc/001.png" alt="截图"></p>
   </div>
 </div>
