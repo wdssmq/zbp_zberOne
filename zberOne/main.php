@@ -12,7 +12,7 @@ if (!$zbp->CheckPlugin('zberOne')) {
   die();
 }
 
-$blogtitle = '一个zblog插件';
+$blogtitle = '一个 zblog 插件';
 require $blogpath . 'zb_system/admin/admin_header.php';
 require $blogpath . 'zb_system/admin/admin_top.php';
 ?>
@@ -43,7 +43,6 @@ require $blogpath . 'zb_system/admin/admin_top.php';
 <div id="divMain">
   <div class="divHeader">
     <?php echo $blogtitle; ?>
-    <small><a title="刷新" href="javascript:;" onclick="location.reload();" style="font-size: 16px;display: inline-block;margin-left: 5px;">刷新</a></small>
   </div>
   <div class="SubMenu"></small>
   </div>
@@ -51,7 +50,7 @@ require $blogpath . 'zb_system/admin/admin_top.php';
     <h3> 一个 QQ 群</h3>
     <p>群名称：一个 zblog 用户群</p>
     <p>群 号：859347813</p>
-    <p>用 途：用于账号解封申请和开发者初审</p>
+    <p>用 途：用于账号解封申请</p>
     <p>链 接：<?php echo zberOne_a("https://jq.qq.com/?_wv=1027&k=Ot3DJ5Xv", "一个zblog用户群"); ?></p>
     <p>验 证：<?php echo zberOne_Check(); ?></p>
     <p><b>↑↑请自己 Debug 出这个验证码为什么不会显示。</b></p>
