@@ -8,6 +8,8 @@ function ActivePlugin_zberOne()
 }
 function zberOne_Temp(&$templates)
 {
+  // 给开发者：不要跨文件闭合 HTML 标签： https://bbs.zblogcn.com/thread-101310.html#484040
+  // 以及 footer 中的 {$footer} 标记也不要省；
   $templates['footer'] = str_replace('{$footer}', '{$footer}' .  '<script src="' . zberOne_Path("script", "host") . '"></script>', $templates['footer']);
 }
 function zberOne_Path($file, $t = 'path')
@@ -40,8 +42,8 @@ function zberOne_a($href, $title, $text = "")
 }
 function InstallPlugin_zberOne()
 {
-  // global $zbp;
-  // $zbp->BuildTemplate();
+  global $zbp;
+  $zbp->BuildTemplate();
 }
 function UninstallPlugin_zberOne()
 {
