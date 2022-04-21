@@ -51,12 +51,12 @@ require $blogpath . 'zb_system/admin/admin_top.php';
     <p>群名称：一个 zblog 用户群</p>
     <p>群 号：859347813</p>
     <p>用 途：用于账号解封申请</p>
-    <p>链 接：<?php echo zberOne_a("https://jq.qq.com/?_wv=1027&k=Ot3DJ5Xv", "一个zblog用户群"); ?></p>
+    <p>链 接：<?php echo zberOne_a("https://jq.qq.com/?_wv=1027&k=Ot3DJ5Xv", "一个 zblog 用户群"); ?></p>
     <p>验 证：<?php echo zberOne_Check(); ?></p>
     <p><b>↑↑请自己 Debug 出这个验证码为什么不会显示。</b></p>
     <hr>
     <p>
-      插件地址：<?php echo zberOne_a("https://app.zblogcn.com/?id=15575", "一个zblog插件"); ?>
+      插件地址：<?php echo zberOne_a("https://app.zblogcn.com/?id=15575", "一个 zblog 插件"); ?>
     </p>
     <blockquote>
       <h3>代码的重要本质是`证明`，然而人生更主要而又无奈的组成是`认为`！！！</h3>
@@ -87,7 +87,7 @@ require $blogpath . 'zb_system/admin/admin_top.php';
     <p><b>↑↑注册并订阅，不需要手机验证；</b></p>
     <p>----</p>
     <p>0、大部分只是禁言而非直接踢掉的基本是因为没正确标注 z-blog 版权。<b>你想让人看到你的站，而我确实看到了，并用相应的行动证明我看到了，仅此而已。</b></p>
-    <p>1、注册「feeds.pub」并订阅上边源。（并不限于这个 RSS 阅读器，Feedly，Inoreader等都可以，手机可以用 Rolly）</p>
+    <p>1、注册「feeds.pub」并订阅上边源。（并不限于这个 RSS 阅读器，Feedly，Inoreader 等都可以，手机可以用 Rolly）</p>
     <p>2、加 QQ 群附图；</p>
     <p><b>3、因擅自分享应用等原因造成的封号不予解封；</b></p>
     <p>----</p>
