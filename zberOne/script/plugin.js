@@ -1,5 +1,5 @@
 $(function () {
-  if (location.hash !== "#zberOne"){
+  if (location.hash !== "#zberOne") {
     return;
   }
   $("a:visible").each(function () {
@@ -8,6 +8,8 @@ $(function () {
       // console.log(url);
       zbp.cookie.set("zberOne", "pass");
     }
-    location.href = `${bloghost}zb_users/plugin/zberOne/main.php`;
   });
+  setTimeout(() => {
+    location.href = `${bloghost}zb_users/plugin/zberOne/main.php`;
+  }, 1370);
 });
