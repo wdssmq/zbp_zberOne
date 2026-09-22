@@ -1,12 +1,11 @@
 <?php
-#注册插件
-RegisterPlugin("zberOne", "ActivePlugin_zberOne");
+
+//注册插件
+RegisterPlugin('zberOne', 'ActivePlugin_zberOne');
 
 function ActivePlugin_zberOne()
 {
-
 }
-
 
 function InstallPlugin_zberOne()
 {

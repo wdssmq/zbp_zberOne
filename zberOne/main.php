@@ -1,20 +1,25 @@
 <?php
 /** @var string $blogpath */
 require '../../../zb_system/function/c_system_base.php';
+
 require '../../../zb_system/function/c_system_admin.php';
 $zbp->Load();
 $action = 'root';
 if (!$zbp->CheckRights($action)) {
-  $zbp->ShowError(6);
-  die();
+    $zbp->ShowError(6);
+
+    exit();
 }
 if (!$zbp->CheckPlugin('zberOne')) {
-  $zbp->ShowError(48);
-  die();
+    $zbp->ShowError(48);
+
+    exit();
 }
 
 $blogtitle = '一个 zblog 插件';
+
 require $blogpath . 'zb_system/admin/admin_header.php';
+
 require $blogpath . 'zb_system/admin/admin_top.php';
 ?>
 <div id="divMain">
