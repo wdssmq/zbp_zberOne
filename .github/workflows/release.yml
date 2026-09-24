@@ -50,6 +50,28 @@ jobs:
           gzip: "true"
           verbose: "false"
 
+      - name: Upload to filepost.dev
+        id: upload
+        env:
+          FILE_POST_API: ${{ secrets.FILE_POST_API }}
+          ZBA_NAME: ${{ steps.pack.outputs.zba-name }}
+        run: |
+          curl --fail-with-body -X POST https://upload.filepost.dev/v1/upload \
+            -H "X-API-Key: $FILE_POST_API" \
+            -F "file=@${ZBA_NAME}" \
+            -F "filename_mode=public" \
+            -o response.json
+
+            # 查看完整响应（调试用）
+            # cat response.json | jq .
+
+            # 提取单个字段
+            FILE_URL=$(jq -r '.url' response.json)
+            echo "文件地址: $FILE_URL"
+
+            # 写回 GitHub 输出，供后续步骤使用
+            echo "file_url=$FILE_URL" >> "$GITHUB_OUTPUT"
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v3
         if: startsWith(github.ref, 'refs/tags/')
@@ -67,3 +89,4 @@ jobs:
             - **版本号**：`${{ steps.pack.outputs.app-version }}`
             - **最后修改**：`${{ steps.pack.outputs.app-modified }}`
             - **安装包**：`${{ steps.pack.outputs.zba-name }}`
+            ${{ steps.upload.outputs.file_url && format('- **备用下载**：[{0}]({1} "{2}")', steps.pack.outputs.zba-name || '下载链接', steps.upload.outputs.file_url, steps.pack.outputs.zba-name || '下载链接') }}
