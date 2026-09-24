@@ -1,3 +1,4 @@
 .history/
 .php-cs-fixer.cache
+*.conf
 vendor/
