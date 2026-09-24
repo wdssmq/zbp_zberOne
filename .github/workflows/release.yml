@@ -3,7 +3,7 @@ name: Build & Release ZBA
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
   workflow_dispatch:
 
 jobs:
@@ -19,7 +19,7 @@ jobs:
       - name: Setup PHP Environment
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.2'
+          php-version: "8.2"
           extensions: zlib, simplexml, json
 
       - name: Extract Plugin ID
@@ -46,16 +46,16 @@ jobs:
         id: pack
         uses: wdssmq/zbp-app-pack@v1
         with:
-          path: './${{ steps.plugin.outputs.plugin_id }}'
-          gzip: 'true'
-          verbose: 'false'
+          path: "./${{ steps.plugin.outputs.plugin_id }}"
+          gzip: "true"
+          verbose: "false"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v3
         if: startsWith(github.ref, 'refs/tags/')
         with:
           files: ${{ steps.pack.outputs.zba-path }}
-          name: '${{ steps.pack.outputs.app-name }} v${{ steps.pack.outputs.app-version }}'
+          name: "${{ steps.pack.outputs.app-name }} v${{ steps.pack.outputs.app-version }}"
           tag_name: ${{ github.ref_name }}
           draft: false
           prerelease: false
