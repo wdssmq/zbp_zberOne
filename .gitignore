@@ -1,4 +1,6 @@
 .history/
 .php-cs-fixer.cache
+.workbuddy/
 *.conf
+usr-data/
 vendor/
