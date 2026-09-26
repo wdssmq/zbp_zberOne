@@ -4,9 +4,8 @@
  * tab_me.php — 「我」标签页
  * 由 main.php 在 #divMain2 内引入
  * 数据来源：usr-data/ 目录下的 json 文件（每个主项目一个文件）
- * 读取逻辑封装于 class/zberOne_base.php
+ * 读取逻辑封装于 class/zberOne_base.php.
  */
-
 if (!defined('ZBP_PATH')) {
     exit;
 }
@@ -15,7 +14,7 @@ require_once __DIR__ . '/class/zberOne_base.php';
 
 if (!function_exists('zberMeTab_TootTitle')) {
     /**
-     * 说说条目的菜单标题：取 text 前 24 字
+     * 说说条目的菜单标题：取 text 前 24 字.
      *
      * @param array $toot
      *
@@ -24,7 +23,7 @@ if (!function_exists('zberMeTab_TootTitle')) {
     function zberMeTab_TootTitle($toot)
     {
         $text = isset($toot['text']) ? trim((string) $toot['text']) : '';
-        if ($text === '') {
+        if ('' === $text) {
             return '（空）';
         }
         if (function_exists('mb_substr')) {
@@ -37,7 +36,7 @@ if (!function_exists('zberMeTab_TootTitle')) {
 
 if (!function_exists('zberMeTab_EntryTitle')) {
     /**
-     * 文章/视频条目的菜单标题：取 title
+     * 文章/视频条目的菜单标题：取 title.
      *
      * @param array $item
      *
@@ -47,13 +46,13 @@ if (!function_exists('zberMeTab_EntryTitle')) {
     {
         $title = isset($item['title']) ? trim((string) $item['title']) : '';
 
-        return $title !== '' ? $title : '（未命名）';
+        return '' !== $title ? $title : '（未命名）';
     }
 }
 
 if (!function_exists('zberMeTab_E')) {
     /**
-     * HTML 转义输出
+     * HTML 转义输出.
      *
      * @param string $str
      *
@@ -233,7 +232,7 @@ $zberMeTab_videos = $zberMeTab_data->Videos();
             <div class="zber-me-panel" id="zber-panel-toot-<?php echo $zberMeTab_i; ?>">
                 <h3>我的说说 · <?php echo zberMeTab_E(zberMeTab_TootTitle($zberMeTab_toot)); ?></h3>
                 <p><?php echo nl2br(zberMeTab_E(isset($zberMeTab_toot['text']) ? $zberMeTab_toot['text'] : '')); ?></p>
-                <p class="zber-me-meta">发布时间：<?php echo zberMeTab_E(isset($zberMeTab_toot['created_at']) && trim((string) $zberMeTab_toot['created_at']) !== '' ? $zberMeTab_toot['created_at'] : '—'); ?></p>
+                <p class="zber-me-meta">发布时间：<?php echo zberMeTab_E(isset($zberMeTab_toot['created_at']) && '' !== trim((string) $zberMeTab_toot['created_at']) ? $zberMeTab_toot['created_at'] : '—'); ?></p>
             </div>
         <?php } ?>
 
@@ -241,7 +240,7 @@ $zberMeTab_videos = $zberMeTab_data->Videos();
             <div class="zber-me-panel" id="zber-panel-post-<?php echo $zberMeTab_i; ?>">
                 <h3>我的文章 · <?php echo zberMeTab_E(zberMeTab_EntryTitle($zberMeTab_post)); ?></h3>
                 <?php $zberMeTab_url = isset($zberMeTab_post['url']) ? trim((string) $zberMeTab_post['url']) : ''; ?>
-                <?php if ($zberMeTab_url !== '') { ?>
+                <?php if ('' !== $zberMeTab_url) { ?>
                     <p>链接：<a href="<?php echo zberMeTab_E($zberMeTab_url); ?>" target="_blank" rel="noopener"><?php echo zberMeTab_E($zberMeTab_url); ?></a></p>
                 <?php } else { ?>
                     <p class="zber-me-empty">暂无链接</p>
@@ -253,7 +252,7 @@ $zberMeTab_videos = $zberMeTab_data->Videos();
             <div class="zber-me-panel" id="zber-panel-video-<?php echo $zberMeTab_i; ?>">
                 <h3>我的视频 · <?php echo zberMeTab_E(zberMeTab_EntryTitle($zberMeTab_video)); ?></h3>
                 <?php $zberMeTab_url = isset($zberMeTab_video['url']) ? trim((string) $zberMeTab_video['url']) : ''; ?>
-                <?php if ($zberMeTab_url !== '') { ?>
+                <?php if ('' !== $zberMeTab_url) { ?>
                     <p>链接：<a href="<?php echo zberMeTab_E($zberMeTab_url); ?>" target="_blank" rel="noopener"><?php echo zberMeTab_E($zberMeTab_url); ?></a></p>
                 <?php } else { ?>
                     <p class="zber-me-empty">暂无链接</p>

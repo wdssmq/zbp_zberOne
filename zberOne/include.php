@@ -14,8 +14,8 @@ function InstallPlugin_zberOne()
 {
     global $zbp;
     if (!$zbp->HasConfig('zberOne')) {
-      $zbp->Config('zberOne')->version = "2026.09.26";
-      $zbp->SaveConfig('zberOne');
+        $zbp->Config('zberOne')->version = '2026.09.26';
+        $zbp->SaveConfig('zberOne');
     }
     $zbp->BuildTemplate();
 }
