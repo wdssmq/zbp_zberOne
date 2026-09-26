@@ -1,4 +1,5 @@
 <?php
+
 /** @var string $blogpath */
 require '../../../zb_system/function/c_system_base.php';
 
@@ -23,12 +24,12 @@ require $blogpath . 'zb_system/admin/admin_header.php';
 require $blogpath . 'zb_system/admin/admin_top.php';
 ?>
 <div id="divMain">
-  <div class="divHeader">
-    <?php echo $blogtitle; ?>
-  </div>
-  <div class="SubMenu"></small>
-  </div>
-  <div id="divMain2">
+    <div class="divHeader">
+        <?php echo $blogtitle; ?>
+    </div>
+    <div class="SubMenu"></div>
+    <div id="divMain2">
+    </div>
 </div>
 
 <?php
