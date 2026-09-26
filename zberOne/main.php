@@ -29,6 +29,9 @@ require $blogpath . 'zb_system/admin/admin_top.php';
     </div>
     <div class="SubMenu"></div>
     <div id="divMain2">
+        <?php
+        require __DIR__ . '/tab_me.php';
+        ?>
     </div>
 </div>
 
