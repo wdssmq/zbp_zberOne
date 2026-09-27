@@ -6,7 +6,7 @@
     <dl>
         {foreach $zberOneTabMenu as $menuGroup}
         <dt class="zber-one-group{if $menuGroup['open']} active{/if}" id="{$menuGroup['id']}">
-            <ui-tab target="{$menuGroup['id']}" name="{$menuGroup['name']}" {if $menuGroup['open']} open{/if}{if $menuGroup['panel'] !='' } data-panel="{$menuGroup['panel']}" {/if}>{zberOneTab_E($menuGroup['title'])}</ui-tab>
+            <ui-tab target="{$menuGroup['id']}" history="true" name="{$menuGroup['name']}" {if $menuGroup['open']} open{/if}{if $menuGroup['panel'] !='' } data-panel="{$menuGroup['panel']}" {/if}>{zberOneTab_E($menuGroup['title'])}</ui-tab>
         </dt>
         <dd>
             <div class="zber-one-items">
