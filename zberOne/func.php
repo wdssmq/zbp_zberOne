@@ -267,6 +267,7 @@ function zberOne_GetTabOnePanels($kind = zberOne_base::KIND_ME)
         'items' => [],
         'empty' => '（暂无说说）',
     ];
+
     foreach ($toots as $i => $toot) {
         $title = zberOneTab_TootTitle($toot);
         $text = isset($toot['text']) ? (string) $toot['text'] : '';
@@ -282,7 +283,6 @@ function zberOne_GetTabOnePanels($kind = zberOne_base::KIND_ME)
             'head' => $prefix . '说说 · ' . $title,
             'text' => $text,
             'meta' => '发布时间：' . ('' !== $createdAt ? $createdAt : '—'),
-            'empty' => '（暂无说说）',
         ];
     }
     $panels[] = $group;
@@ -315,7 +315,6 @@ function zberOne_GetTabOnePanels($kind = zberOne_base::KIND_ME)
                 'active' => false,
                 'head' => $entry['label'] . ' · ' . $title,
                 'url' => $url,
-                'empty' => $entry['empty'],
             ];
         }
         $panels[] = $group;

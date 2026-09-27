@@ -5,7 +5,6 @@
 {/if}
 {if $panel['text'] != ''}
 <p>{nl2br(zberOneTab_E($panel['text']))}</p>
-{if $panel['meta'] != ''}<p class="zber-one-meta">{zberOneTab_E($panel['meta'])}</p>{/if}
-{else}
-<p class="zber-one-empty">{zberOneTab_E($panel['empty'])}</p>
 {/if}
+{if $panel['meta'] != ''}<p class="zber-one-meta">{zberOneTab_E($panel['meta'])}</p>{/if}
+
