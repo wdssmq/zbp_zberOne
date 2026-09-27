@@ -1,10 +1,13 @@
 <?php exit(); ?>
-<!-- 面板 - 说说：一条一个面板 -->
+<!-- 面板 - 说说：一条一个面板（展示 + 编辑/删除入口） -->
 {if $panel['head'] != ''}
-<h3 class="zber-one-panel-title">{zberOneTab_E($panel['head'])}</h3>
+<h3 class="zber-one-panel-title">
+    {zberOneTab_E($panel['head'])}
+    {if $panel['formPanel'] != ''}<a class="zber-one-op" href="#" data-zber-edit data-panel="{$panel['formPanel']}">编辑</a>{/if}
+    {if $panel['delUrl'] != ''}<a class="zber-one-op" href="{zberOneTab_E($panel['delUrl'])}" data-zber-del data-type="{$panel['type']}" data-idx="{$panel['idx']}">删除</a>{/if}
+</h3>
 {/if}
 {if $panel['text'] != ''}
 <p>{nl2br(zberOneTab_E($panel['text']))}</p>
 {/if}
 {if $panel['meta'] != ''}<p class="zber-one-meta">{zberOneTab_E($panel['meta'])}</p>{/if}
-

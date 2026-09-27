@@ -215,3 +215,33 @@
     font-size: 12px;
     margin-top: 10px;
 }
+
+/* 操作入口：面板标题旁的「添加 / 编辑 / 删除」 */
+#zber-one-root .zber-one-op {
+    margin-left: 10px;
+    font-size: 12px;
+    font-weight: 400;
+    color: #1a66b3;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+#zber-one-root .zber-one-op:hover {
+    text-decoration: underline;
+}
+
+/* 表单面板 */
+#zber-one-root .zber-one-field-label {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 13px;
+}
+
+#zber-one-root .ui-button {
+    background: var(--ui-button-color) no-repeat center;
+}
+
+#zber-one-root .ui-input {
+    width: 37em;
+}
+

@@ -9,6 +9,8 @@ RegisterPlugin('zberOne', 'ActivePlugin_zberOne');
 function ActivePlugin_zberOne()
 {
     Add_Filter_Plugin('Filter_Plugin_Zbp_BuildTemplate', 'zberOne_GenTpl');
+    // 后台「我」的数据写入走 cmd.php 自带的 ajax 接口（act=ajax&src=zberOne）
+    Add_Filter_Plugin('Filter_Plugin_Cmd_Ajax', 'zberOne_CmdAjax');
 }
 
 function zberOne_GenTpl(&$templates)

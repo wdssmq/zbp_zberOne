@@ -1,7 +1,7 @@
 <?php
 
 /**
- * zberOne_base — usr-data 目录各主项目数据的读取封装.
+ * zberOne_base — usr-data 目录各主项目数据的读写封装.
  *
  * 数据分两级：
  *   kind  父级，谁的：me（读 usr-data）/ other（将来由 id 从外部获取）
@@ -9,11 +9,11 @@
  *
  * 只有「我」的数据落在本地：数据目录 zberOne/usr-data/，每个子项目一个 json
  *   one.json   信息：{id, name, description}
- *   toot.json  说说：[{text, created_at}]
+ *   toot.json  说说：[{text, created_at}]（created_at 由写入时自动生成）
  *   post.json  文章：[{title, url}]
  *   video.json 视频：[{title, url}]
  *
- * Save 系列方法为预留的写入入口，持久化逻辑尚未实现；只接受「我」自己的数据。
+ * 读写只接受「我」（kind = me）自己的数据；other 的数据来自外部，Load 恒空、写入一律拒绝。
  */
 if (!class_exists('zberOne_base')) {
     class zberOne_base
@@ -257,15 +257,13 @@ if (!class_exists('zberOne_base')) {
             return true;
         }
 
-        /* ---------- 写入（预留入口，尚未实现；只写「我」自己的数据） ---------- */
+        /* ---------- 写入（只写「我」自己的数据） ---------- */
 
         /**
-         * 写入指定类型的数据。
+         * 写入指定类型的数据（整份覆盖）。
          *
-         * 只有「我」（KIND_ME）有写入入口；other 的数据来自外部，不接受写入。
-         *
-         * TODO: json_encode(JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) 后写入；
-         *       目录不存在时自动创建。
+         * 只有「我」（KIND_ME）有写入入口；目录不存在时自动创建。
+         * 写盘成功后清空该类型的内存缓存，使后续 Load 重新读盘。
          *
          * @param string     $type
          * @param null|array $data 待写入的数据
@@ -280,13 +278,20 @@ if (!class_exists('zberOne_base')) {
             if (!in_array($type, self::$types, true)) {
                 return false;
             }
+            if (!is_dir($this->dataDir) && !@mkdir($this->dataDir, 0755, true) && !is_dir($this->dataDir)) {
+                return false;
+            }
 
-            // 预留入口：写入逻辑尚未实现。
-            return false;
+            $ok = $this->writeJson($this->Path($type), is_array($data) ? $data : []);
+            if ($ok) {
+                $this->ClearCache($type);
+            }
+
+            return $ok;
         }
 
         /**
-         * 写入信息。
+         * 整份覆盖写「信息」。
          *
          * @param null|array $data
          *
@@ -298,7 +303,7 @@ if (!class_exists('zberOne_base')) {
         }
 
         /**
-         * 写入说说。
+         * 整份覆盖写「说说」。
          *
          * @param null|array $data
          *
@@ -310,7 +315,7 @@ if (!class_exists('zberOne_base')) {
         }
 
         /**
-         * 写入文章。
+         * 整份覆盖写「文章」。
          *
          * @param null|array $data
          *
@@ -322,7 +327,7 @@ if (!class_exists('zberOne_base')) {
         }
 
         /**
-         * 写入视频。
+         * 整份覆盖写「视频」。
          *
          * @param null|array $data
          *
@@ -331,6 +336,237 @@ if (!class_exists('zberOne_base')) {
         public function SaveVideos($data = null)
         {
             return $this->Save(self::TYPE_VIDEO, $data);
+        }
+
+        /**
+         * 新增/覆盖「信息」（one 是单对象，整条替换）。
+         *
+         * @param null|array $data
+         *
+         * @return bool
+         */
+        public function AddOne($data = null)
+        {
+            return $this->SaveOne($this->pick(self::TYPE_ONE, $data));
+        }
+
+        /**
+         * 追加一条「说说」。
+         *
+         * 发布时间由服务端在写入时确定，不接受调用方传入。
+         *
+         * @param null|array $data
+         *
+         * @return bool
+         */
+        public function AddToot($data = null)
+        {
+            $list = $this->Toots();
+            $item = $this->pick(self::TYPE_TOOT, $data);
+            $item['created_at'] = date('Y-m-d H:i:s');
+            $list[] = $item;
+
+            return $this->SaveToots(array_values($list));
+        }
+
+        /**
+         * 追加一条「文章」。
+         *
+         * @param null|array $data
+         *
+         * @return bool
+         */
+        public function AddPost($data = null)
+        {
+            $list = $this->Posts();
+            $list[] = $this->pick(self::TYPE_POST, $data);
+
+            return $this->SavePosts(array_values($list));
+        }
+
+        /**
+         * 追加一条「视频」。
+         *
+         * @param null|array $data
+         *
+         * @return bool
+         */
+        public function AddVideo($data = null)
+        {
+            $list = $this->Videos();
+            $list[] = $this->pick(self::TYPE_VIDEO, $data);
+
+            return $this->SaveVideos(array_values($list));
+        }
+
+        /**
+         * 覆盖「信息」（one 是单对象，与 AddOne 等价）。
+         *
+         * @param null|array $data
+         *
+         * @return bool
+         */
+        public function UpdateOne($data = null)
+        {
+            return $this->SaveOne($this->pick(self::TYPE_ONE, $data));
+        }
+
+        /**
+         * 修改第 $idx 条「说说」。
+         *
+         * @param int        $idx  序号
+         * @param null|array $data
+         *
+         * @return bool
+         */
+        public function UpdateToot($idx, $data = null)
+        {
+            $list = $this->Toots();
+            $idx = (int) $idx;
+            if (!isset($list[$idx])) {
+                return false;
+            }
+            $list[$idx] = $this->pick(self::TYPE_TOOT, $data);
+
+            return $this->SaveToots(array_values($list));
+        }
+
+        /**
+         * 修改第 $idx 条「文章」。
+         *
+         * @param int        $idx  序号
+         * @param null|array $data
+         *
+         * @return bool
+         */
+        public function UpdatePost($idx, $data = null)
+        {
+            $list = $this->Posts();
+            $idx = (int) $idx;
+            if (!isset($list[$idx])) {
+                return false;
+            }
+            $list[$idx] = $this->pick(self::TYPE_POST, $data);
+
+            return $this->SavePosts(array_values($list));
+        }
+
+        /**
+         * 修改第 $idx 条「视频」。
+         *
+         * @param int        $idx  序号
+         * @param null|array $data
+         *
+         * @return bool
+         */
+        public function UpdateVideo($idx, $data = null)
+        {
+            $list = $this->Videos();
+            $idx = (int) $idx;
+            if (!isset($list[$idx])) {
+                return false;
+            }
+            $list[$idx] = $this->pick(self::TYPE_VIDEO, $data);
+
+            return $this->SaveVideos(array_values($list));
+        }
+
+        /**
+         * 删除第 $idx 条「说说」。
+         *
+         * @param int $idx 序号
+         *
+         * @return bool
+         */
+        public function DeleteToot($idx)
+        {
+            $list = $this->Toots();
+            $idx = (int) $idx;
+            if (!isset($list[$idx])) {
+                return false;
+            }
+            unset($list[$idx]);
+
+            return $this->SaveToots(array_values($list));
+        }
+
+        /**
+         * 删除第 $idx 条「文章」。
+         *
+         * @param int $idx 序号
+         *
+         * @return bool
+         */
+        public function DeletePost($idx)
+        {
+            $list = $this->Posts();
+            $idx = (int) $idx;
+            if (!isset($list[$idx])) {
+                return false;
+            }
+            unset($list[$idx]);
+
+            return $this->SavePosts(array_values($list));
+        }
+
+        /**
+         * 删除第 $idx 条「视频」。
+         *
+         * @param int $idx 序号
+         *
+         * @return bool
+         */
+        public function DeleteVideo($idx)
+        {
+            $list = $this->Videos();
+            $idx = (int) $idx;
+            if (!isset($list[$idx])) {
+                return false;
+            }
+            unset($list[$idx]);
+
+            return $this->SaveVideos(array_values($list));
+        }
+
+        /**
+         * 指定类型允许的字段名列表（输出顺序即持久化顺序）。
+         *
+         * @param string $type
+         *
+         * @return array
+         */
+        private function fields($type)
+        {
+            switch ($type) {
+                case self::TYPE_ONE:
+                    return ['id', 'name', 'description'];
+                case self::TYPE_TOOT:
+                    return ['text', 'created_at'];
+                case self::TYPE_POST:
+                case self::TYPE_VIDEO:
+                    return ['title', 'url'];
+            }
+
+            return [];
+        }
+
+        /**
+         * 只取该类型白名单内的字段，缺失补空串，丢弃未知字段。
+         *
+         * @param string     $type
+         * @param null|array $data
+         *
+         * @return array
+         */
+        private function pick($type, $data)
+        {
+            $data = is_array($data) ? $data : [];
+            $out = [];
+            foreach ($this->fields($type) as $key) {
+                $out[$key] = isset($data[$key]) ? (string) $data[$key] : '';
+            }
+
+            return $out;
         }
 
         /**
@@ -350,7 +586,7 @@ if (!class_exists('zberOne_base')) {
         }
 
         /**
-         * 写入 json 文件；Save 系列实现后可直接复用。
+         * 写入 json 文件（原子：先写临时文件再 rename 覆盖）。
          *
          * @param string $path
          * @param array  $data
@@ -364,7 +600,17 @@ if (!class_exists('zberOne_base')) {
                 return false;
             }
 
-            return false !== file_put_contents($path, $json . "\n");
+            $tmp = $path . '.tmp';
+            if (false === @file_put_contents($tmp, $json . "\n")) {
+                return false;
+            }
+            if (!@rename($tmp, $path)) {
+                @unlink($tmp);
+
+                return false;
+            }
+
+            return true;
         }
     }
 }

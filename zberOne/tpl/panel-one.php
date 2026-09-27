@@ -1,6 +1,9 @@
 <?php exit(); ?>
-<!-- 面板 - one（我 / 他人，按 kind 取数） -->
-<h3 class="zber-one-panel-title">{zberOneTab_E($panel['head'])}</h3>
+<!-- 面板 - one（我 / 他人，按 kind 取数；编辑入口只给「我」，无删除） -->
+<h3 class="zber-one-panel-title">
+    {zberOneTab_E($panel['head'])}
+    {if $panel['formPanel'] != ''}<a class="zber-one-op" href="#" data-zber-edit data-panel="{$panel['formPanel']}">编辑</a>{/if}
+</h3>
 {if count($panel['rows']) > 0}
 <dl>
     {foreach $panel['rows'] as $row}
