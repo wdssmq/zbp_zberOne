@@ -35,7 +35,7 @@ function zberOne_Path($file = '', $t = 'path')
  *
  * @return string
  */
-function zberMeTab_E($str)
+function zberOneTab_E($str)
 {
     return htmlspecialchars((string) $str, ENT_QUOTES, 'UTF-8');
 }
@@ -47,7 +47,7 @@ function zberMeTab_E($str)
  *
  * @return string
  */
-function zberMeTab_TootTitle($toot)
+function zberOneTab_TootTitle($toot)
 {
     $text = isset($toot['text']) ? trim((string) $toot['text']) : '';
     if ('' === $text) {
@@ -67,7 +67,7 @@ function zberMeTab_TootTitle($toot)
  *
  * @return string
  */
-function zberMeTab_EntryTitle($item)
+function zberOneTab_EntryTitle($item)
 {
     $title = isset($item['title']) ? trim((string) $item['title']) : '';
 
@@ -75,28 +75,74 @@ function zberMeTab_EntryTitle($item)
 }
 
 /**
- * 「我」标签页 - 左栏层级菜单数据.
+ * 「一个」标签页 - 数据来源 slot 定义.
+ *
+ * 数组结构：
+ *   kind   父级来源（me / other），对应 zberOne_base::KIND_*
+ *   id     来源标识：me 固定为空（数据在 usr-data/one.json）；other 暂固定为 any，
+ *          将来由它从外部读取具体数据
+ *   name   该来源的显示名（滑动切换区域用）
+ *   label  该来源下四个主项目的标题前缀
+ *
+ * @return array
+ */
+function zberOne_GetTabOneSlots()
+{
+    return [
+        ['kind' => zberOne_base::KIND_ME, 'id' => '', 'name' => '我', 'label' => '我的'],
+        ['kind' => zberOne_base::KIND_OTHER, 'id' => 'any', 'name' => '他人', 'label' => '他人的'],
+    ];
+}
+
+/**
+ * 按 kind 取单个来源 slot；kind 无效时返回 null.
+ *
+ * @param string $kind
+ *
+ * @return null|array
+ */
+function zberOne_GetTabOneSlot($kind)
+{
+    foreach (zberOne_GetTabOneSlots() as $slot) {
+        if ($slot['kind'] === $kind) {
+            return $slot;
+        }
+    }
+
+    return null;
+}
+
+/**
+ * 「一个」标签页 - 指定来源的左栏层级菜单数据.
  *
  * 数组结构：
  *   title  菜单标题
- *   type   对应的数据类型（me / toot / post / video）
+ *   type   对应的子级项目（one / toot / post / video）
  *   panel  顶层项自身对应的面板 id（子项为空的组留空）
  *   open   是否默认展开
  *   empty  子项为空时的占位文字
  *   items  子项列表，每项 title + panel
  *
+ * @param string $kind 数据来源
+ *
  * @return array
  */
-function zberOne_GetTabMeMenu()
+function zberOne_GetTabOneMenu($kind = zberOne_base::KIND_ME)
 {
-    $data = new zberOne_base();
+    $slot = zberOne_GetTabOneSlot($kind);
+    if (null === $slot) {
+        return [];
+    }
+
+    $data = new zberOne_base($kind);
+    $prefix = $slot['label'];
 
     // 菜单结构先定义成数组，再由各主项目数据循环填充子项
     $menu = [
-        ['title' => '我', 'type' => 'me', 'panel' => 'zber-panel-me', 'open' => true, 'empty' => '', 'items' => []],
-        ['title' => '我的说说', 'type' => 'toot', 'panel' => '', 'open' => true, 'empty' => '（暂无说说）', 'items' => []],
-        ['title' => '我的文章', 'type' => 'post', 'panel' => '', 'open' => false, 'empty' => '（暂无文章）', 'items' => []],
-        ['title' => '我的视频', 'type' => 'video', 'panel' => '', 'open' => false, 'empty' => '（暂无视频）', 'items' => []],
+        ['title' => $prefix . '信息', 'type' => 'one', 'panel' => 'zber-panel-' . $kind . '-one', 'open' => true, 'empty' => '', 'items' => []],
+        ['title' => $prefix . '说说', 'type' => 'toot', 'panel' => '', 'open' => true, 'empty' => '（暂无说说）', 'items' => []],
+        ['title' => $prefix . '文章', 'type' => 'post', 'panel' => '', 'open' => false, 'empty' => '（暂无文章）', 'items' => []],
+        ['title' => $prefix . '视频', 'type' => 'video', 'panel' => '', 'open' => false, 'empty' => '（暂无视频）', 'items' => []],
     ];
 
     $listMap = [
@@ -111,8 +157,8 @@ function zberOne_GetTabMeMenu()
         }
         foreach ($listMap[$group['type']] as $j => $item) {
             $menu[$i]['items'][] = [
-                'title' => ('toot' === $group['type']) ? zberMeTab_TootTitle($item) : zberMeTab_EntryTitle($item),
-                'panel' => 'zber-panel-' . $group['type'] . '-' . $j,
+                'title' => ('toot' === $group['type']) ? zberOneTab_TootTitle($item) : zberOneTab_EntryTitle($item),
+                'panel' => 'zber-panel-' . $kind . '-' . $group['type'] . '-' . $j,
             ];
         }
     }
@@ -121,66 +167,84 @@ function zberOne_GetTabMeMenu()
 }
 
 /**
- * 「我」标签页 - 右栏内容面板数据.
+ * 「一个」标签页 - 指定来源的右栏内容面板数据.
  *
  * 每项结构：
  *   id / type / tpl / active / title  公共字段
- *   rows   类型为 me 时的 dl 行
- *   text   类型为 toot 时的正文
- *   meta   类型为 toot 时的附加信息
- *   url    类型为 post / video 时的链接
+ *   rows   子级为 one 时的 dl 行（无数据时为空数组，模板回落到 empty）
+ *   empty  子级为 one 时无数据源的提示
+ *   text   子级为 toot 时的正文
+ *   meta   子级为 toot 时的附加信息
+ *   url    子级为 post / video 时的链接
+ *
+ * @param string $kind 数据来源
  *
  * @return array
  */
-function zberOne_GetTabMePanels()
+function zberOne_GetTabOnePanels($kind = zberOne_base::KIND_ME)
 {
-    $data = new zberOne_base();
+    $slot = zberOne_GetTabOneSlot($kind);
+    if (null === $slot) {
+        return [];
+    }
+
+    $data = new zberOne_base($kind);
+    $prefix = $slot['label'];
 
     $panels = [];
 
-    // 「我」
-    $me = $data->Me();
+    // 信息
+    $one = $data->One();
+
+    // 数据不存在时 rows 留空，由模板显示「空数据」
+    $rows = [];
+    if (count($one) > 0) {
+        $rows = [
+            ['label' => 'ID', 'value' => isset($one['id']) ? $one['id'] : ''],
+            ['label' => '名称', 'value' => isset($one['name']) ? $one['name'] : ''],
+            ['label' => '简介', 'value' => isset($one['description']) ? $one['description'] : ''],
+        ];
+    }
+
     $panels[] = [
-        'id' => 'zber-panel-me',
-        'type' => 'me',
-        'tpl' => 'plugin_zberOne_panel-me',
+        'id' => 'zber-panel-' . $kind . '-one',
+        'type' => 'one',
+        'tpl' => 'plugin_zberOne_panel-one',
         'active' => true,
-        'title' => '我',
-        'empty' => '暂无数据（' . basename($data->Dir()) . '/me.json）',
-        'rows' => [
-            ['label' => 'ID', 'value' => isset($me['id']) ? $me['id'] : ''],
-            ['label' => '名称', 'value' => isset($me['name']) ? $me['name'] : ''],
-            ['label' => '简介', 'value' => isset($me['description']) ? $me['description'] : ''],
-        ],
+        'title' => $prefix . '信息',
+        'empty' => (zberOne_base::KIND_ME === $kind)
+            ? '暂无数据（' . basename($data->Dir()) . '/one.json）'
+            : '暂无数据（' . $slot['name'] . ' id：' . $slot['id'] . '，将来由 id 从外部获取）',
+        'rows' => $rows,
     ];
 
-    // 我的说说
+    // 说说
     foreach ($data->Toots() as $i => $toot) {
         $createdAt = isset($toot['created_at']) ? trim((string) $toot['created_at']) : '';
         $panels[] = [
-            'id' => 'zber-panel-toot-' . $i,
+            'id' => 'zber-panel-' . $kind . '-toot-' . $i,
             'type' => 'toot',
             'tpl' => 'plugin_zberOne_panel-toot',
             'active' => false,
-            'title' => '我的说说 · ' . zberMeTab_TootTitle($toot),
+            'title' => $prefix . '说说 · ' . zberOneTab_TootTitle($toot),
             'text' => isset($toot['text']) ? (string) $toot['text'] : '',
             'meta' => '发布时间：' . ('' !== $createdAt ? $createdAt : '—'),
         ];
     }
 
-    // 我的文章 / 我的视频：条目仅 title + url
+    // 文章 / 视频：条目仅 title + url
     $entries = [
-        ['type' => 'post', 'label' => '我的文章', 'list' => $data->Posts()],
-        ['type' => 'video', 'label' => '我的视频', 'list' => $data->Videos()],
+        ['type' => 'post', 'label' => $prefix . '文章', 'list' => $data->Posts()],
+        ['type' => 'video', 'label' => $prefix . '视频', 'list' => $data->Videos()],
     ];
     foreach ($entries as $entry) {
         foreach ($entry['list'] as $i => $item) {
             $panels[] = [
-                'id' => 'zber-panel-' . $entry['type'] . '-' . $i,
+                'id' => 'zber-panel-' . $kind . '-' . $entry['type'] . '-' . $i,
                 'type' => $entry['type'],
                 'tpl' => 'plugin_zberOne_panel-link',
                 'active' => false,
-                'title' => $entry['label'] . ' · ' . zberMeTab_EntryTitle($item),
+                'title' => $entry['label'] . ' · ' . zberOneTab_EntryTitle($item),
                 'url' => isset($item['url']) ? trim((string) $item['url']) : '',
             ];
         }
@@ -190,22 +254,31 @@ function zberOne_GetTabMePanels()
 }
 
 /**
- * 输出「我」标签页（左栏菜单 + 右栏面板）.
+ * 输出「一个」标签页 - 单个来源（kind）的左右栏.
+ *
+ * 页面级的滑动容器见 main.php；每个来源渲染成一个 slide。
+ *
+ * @param string $kind 数据来源
  */
-function zberOne_echoTabMe()
+function zberOne_echoTabOne($kind = zberOne_base::KIND_ME)
 {
     global $zbp;
 
-    $tplName = 'plugin_zberOne_tab-me';
+    $slot = zberOne_GetTabOneSlot($kind);
+    if (null === $slot) {
+        return;
+    }
+
+    $tplName = 'plugin_zberOne_tab-one';
 
     // 模板未编译时先重建，开发期改动 tpl 文件后无需手动刷新
     if (!$zbp->template->HasTemplate($tplName)) {
         $zbp->BuildTemplate();
     }
 
-    $zbp->template->SetTags('zberMeTabMenu', zberOne_GetTabMeMenu());
-    $zbp->template->SetTags('zberMeTabPanels', zberOne_GetTabMePanels());
-    $zbp->template->SetTags('zberMeTabStyle', zberOne_Path('style/style.css', 'host'));
+    $zbp->template->SetTags('zberOneTabSlot', $slot);
+    $zbp->template->SetTags('zberOneTabMenu', zberOne_GetTabOneMenu($kind));
+    $zbp->template->SetTags('zberOneTabPanels', zberOne_GetTabOnePanels($kind));
 
     $zbp->template->Display($tplName);
 }
