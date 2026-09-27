@@ -540,8 +540,10 @@ if (!class_exists('zberOne_base')) {
             switch ($type) {
                 case self::TYPE_ONE:
                     return ['id', 'name', 'description'];
+
                 case self::TYPE_TOOT:
                     return ['text', 'created_at'];
+
                 case self::TYPE_POST:
                 case self::TYPE_VIDEO:
                     return ['title', 'url'];
