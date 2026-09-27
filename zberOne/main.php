@@ -17,6 +17,8 @@ if (!$zbp->CheckPlugin('zberOne')) {
     exit();
 }
 
+InstallPlugin_zberOne();
+
 $blogtitle = '一个 zblog 插件';
 
 require $blogpath . 'zb_system/admin/admin_header.php';
