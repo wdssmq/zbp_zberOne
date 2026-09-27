@@ -97,6 +97,71 @@
         }
     }
 
+    // 用服务端返回的整栏 HTML 整体替换左栏与右栏容器，并恢复当前可见面板
+    // 服务端返回的是容器本身（.zber-one-side / .zber-one-main），所以换 outerHTML 而不是 innerHTML
+    function applyColumns(slide, sidebarHtml, mainHtml, activePanelId) {
+        if (sidebarHtml) {
+            const side = slide.querySelector('.zber-one-side');
+            if (side) {
+                side.outerHTML = sidebarHtml;
+            }
+        }
+        if (mainHtml) {
+            const main = slide.querySelector('.zber-one-main');
+            if (main) {
+                main.outerHTML = mainHtml;
+            }
+        }
+        if (activePanelId) {
+            showPanel(slide, activePanelId);
+        }
+    }
+
+    // 发起一次写操作请求，成功后替换整栏；失败提示 err.msg（cmd.php 内置 JSON 格式：{data, err:{code,msg}}）
+    function requestWrite(slide, url, body) {
+        const options = { method: 'POST', credentials: 'same-origin' };
+        if (body) {
+            options.body = body;
+        }
+
+        return fetch(url, options)
+            .then(function (res) { return res.json(); })
+            .then(function (json) {
+                if (!json || !json.err || json.err.code !== 0) {
+                    window.alert((json && json.err && json.err.msg) ? json.err.msg : '操作失败');
+
+                    return;
+                }
+                const data = json.data || {};
+                applyColumns(slide, data.sidebar, data.main, data.activePanel);
+            })
+            .catch(function () {
+                window.alert('请求失败');
+            });
+    }
+
+    // 提交表单（无刷新）：把表单字段序列化后交给 requestWrite
+    function onFormSubmit(form, slide) {
+        const body = new FormData(form);
+        requestWrite(slide, form.getAttribute('action'), body);
+    }
+
+    // 点击删除：先确认，再带 token 请求
+    function onDelete(link, slide) {
+        if (!window.confirm('确认删除？')) {
+            return;
+        }
+        requestWrite(slide, link.getAttribute('href'), null);
+    }
+
+    // 点击「添加 / 编辑」：切到对应的表单面板
+    function onEditToggle(el, slide) {
+        const panelId = el.getAttribute('data-panel');
+        if (panelId) {
+            showPanel(slide, panelId);
+        }
+    }
+
     root.addEventListener('click', function (e) {
         const slide = closestOf(e.target, '.zber-one-slide', root);
         if (!slide) {
@@ -111,8 +176,49 @@
             activate(index);
             return;
         }
+
+        // 写操作入口优先于面板切换
+        const delLink = closestOf(e.target, '[data-zber-del]', slide);
+        if (delLink) {
+            e.preventDefault();
+            onDelete(delLink, slide);
+            return;
+        }
+        const editLink = closestOf(e.target, '[data-zber-edit]', slide);
+        if (editLink) {
+            e.preventDefault();
+            onEditToggle(editLink, slide);
+            return;
+        }
+        const addLink = closestOf(e.target, '[data-zber-add]', slide);
+        if (addLink) {
+            e.preventDefault();
+            onEditToggle(addLink, slide);
+            return;
+        }
+        const cancelBtn = closestOf(e.target, '[data-zber-cancel]', slide);
+        if (cancelBtn) {
+            e.preventDefault();
+            showPanel(slide, cancelBtn.getAttribute('data-panel'));
+            return;
+        }
+
         // 激活的左右栏内 → 切换面板
         onSideClick(e.target, slide);
+    });
+
+    // 表单提交无刷新
+    root.addEventListener('submit', function (e) {
+        const slide = closestOf(e.target, '.zber-one-slide', root);
+        if (!slide) {
+            return;
+        }
+        const form = closestOf(e.target, '[data-zber-form]', slide);
+        if (!form) {
+            return;
+        }
+        e.preventDefault();
+        onFormSubmit(form, slide);
     });
 
     // 默认显示第一个来源（我）
