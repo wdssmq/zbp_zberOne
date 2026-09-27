@@ -1,13 +1,25 @@
 <?php
-
-//注册插件
-RegisterPlugin('zberOne', 'ActivePlugin_zberOne');
-
+require_once __DIR__ . '/func.php';
 // usr-data 数据读取类
 require_once __DIR__ . '/class/zberOne_base.php';
+// 注册插件
+RegisterPlugin('zberOne', 'ActivePlugin_zberOne');
+
 
 function ActivePlugin_zberOne()
 {
+    Add_Filter_Plugin('Filter_Plugin_Zbp_BuildTemplate', 'zberOne_GenTpl');
+}
+
+function zberOne_GenTpl(&$templates)
+{
+    $tplDir = zberOne_Path("tpl");
+    $tplFiles = GetFilesInDir($tplDir, "php");
+    foreach ($tplFiles as $tplFile) {
+        $tplCont = file_get_contents($tplFile);
+        $tplName = "plugin_zberOne_" . basename($tplFile, ".php");
+        $templates[$tplName] = $tplCont;
+    }
 }
 
 function InstallPlugin_zberOne()
