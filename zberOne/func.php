@@ -120,10 +120,10 @@ function zberOne_GetTabOneSlot($kind)
  *   type   对应的子级项目（one / toot / post / video）
  *   id     该组在 DOM 中的唯一 id，即 LuLu <ui-tab> 的 target：zber-group-<kind>-<type>
  *   name   手风琴分组名，同 kind 的各组互斥展开（同时只开一个）：zber-group-<kind>
- *   panel  顶层项自身对应的面板 id（子项为空的组留空）
+ *   panel  点该组标题时显示的组面板 id：zber-panel-<kind>-<type>
  *   open   是否默认展开（互斥手风琴下只应有一组为 true）
  *   empty  子项为空时的占位文字
- *   items  子项列表，每项 title + panel
+ *   items  子项列表，每项 title（菜单里的短标题）+ panel（该项对应的面板 id）
  *
  * @param string $kind 数据来源
  *
@@ -141,12 +141,13 @@ function zberOne_GetTabOneMenu($kind = zberOne_base::KIND_ME)
 
     // 菜单结构先定义成数组，再由各主项目数据循环填充子项
     // id / name 供 LuLu <ui-tab> 手风琴使用：id 是 target，name 相同者互斥展开
+    // panel 一律指向该组的组面板（点组标题永远显示组面板）
     $groupName = 'zber-group-' . $kind;
     $menu = [
-        ['title' => $prefix . '信息', 'type' => 'one', 'id' => $groupName . '-one', 'name' => $groupName, 'panel' => 'zber-panel-' . $kind . '-one', 'open' => true, 'empty' => '', 'items' => []],
-        ['title' => $prefix . '说说', 'type' => 'toot', 'id' => $groupName . '-toot', 'name' => $groupName, 'panel' => '', 'open' => false, 'empty' => '（暂无说说）', 'items' => []],
-        ['title' => $prefix . '文章', 'type' => 'post', 'id' => $groupName . '-post', 'name' => $groupName, 'panel' => '', 'open' => false, 'empty' => '（暂无文章）', 'items' => []],
-        ['title' => $prefix . '视频', 'type' => 'video', 'id' => $groupName . '-video', 'name' => $groupName, 'panel' => '', 'open' => false, 'empty' => '（暂无视频）', 'items' => []],
+        ['title' => $prefix . '信息', 'type' => 'one', 'id' => $groupName . '-one', 'name' => $groupName, 'open' => true, 'empty' => '', 'items' => []],
+        ['title' => $prefix . '说说', 'type' => 'toot', 'id' => $groupName . '-toot', 'name' => $groupName, 'open' => false, 'empty' => '（暂无说说）', 'items' => []],
+        ['title' => $prefix . '文章', 'type' => 'post', 'id' => $groupName . '-post', 'name' => $groupName, 'open' => false, 'empty' => '（暂无文章）', 'items' => []],
+        ['title' => $prefix . '视频', 'type' => 'video', 'id' => $groupName . '-video', 'name' => $groupName, 'open' => false, 'empty' => '（暂无视频）', 'items' => []],
     ];
 
     $listMap = [
@@ -156,13 +157,17 @@ function zberOne_GetTabOneMenu($kind = zberOne_base::KIND_ME)
     ];
 
     foreach ($menu as $i => $group) {
-        if (!isset($listMap[$group['type']])) {
+        $type = $group['type'];
+        $menu[$i]['panel'] = zberOne_PanelId($kind, $type);
+
+        if (!isset($listMap[$type])) {
             continue;
         }
-        foreach ($listMap[$group['type']] as $j => $item) {
+
+        foreach ($listMap[$type] as $j => $item) {
             $menu[$i]['items'][] = [
-                'title' => ('toot' === $group['type']) ? zberOneTab_TootTitle($item) : zberOneTab_EntryTitle($item),
-                'panel' => 'zber-panel-' . $kind . '-' . $group['type'] . '-' . $j,
+                'title' => ('toot' === $type) ? zberOneTab_TootTitle($item) : zberOneTab_EntryTitle($item),
+                'panel' => zberOne_PanelId($kind, $type, $j),
             ];
         }
     }
@@ -171,15 +176,44 @@ function zberOne_GetTabOneMenu($kind = zberOne_base::KIND_ME)
 }
 
 /**
+ * 面板 id：zber-panel-<kind>-<type>[-<序号>].
+ *
+ * 同一 kind 下唯一，两个 slide 之间靠 kind 区分，避免 id 撞车。
+ * 省略序号 = 该组的组面板（点组标题显示）；带序号 = 该组某条子项的面板。
+ *
+ * @param string   $kind 数据来源
+ * @param string   $type 子级项目（one / toot / post / video）
+ * @param null|int $idx  子项序号；省略表示该组的组面板
+ *
+ * @return string
+ */
+function zberOne_PanelId($kind, $type, $idx = null)
+{
+    $id = 'zber-panel-' . $kind . '-' . $type;
+    if (null !== $idx) {
+        $id .= '-' . $idx;
+    }
+
+    return $id;
+}
+
+/**
  * 「一个」标签页 - 指定来源的右栏内容面板数据.
  *
+ * 结构与左栏菜单对应，每个可点目标都有对应的已渲染面板：
+ *   组面板：每组一条（id = zber-panel-<kind>-<type>），点组标题显示；无数据时自己显示空提示
+ *   子项面板：说说 / 文章 / 视频的每条子项一条（id 带序号），点子项显示
+ *   信息组没有子项，只有组面板（渲染 source 字段行）
+ *
  * 每项结构：
- *   id / type / tpl / active / title  公共字段
- *   rows   子级为 one 时的 dl 行（无数据时为空数组，模板回落到 empty）
- *   empty  子级为 one 时无数据源的提示
- *   text   子级为 toot 时的正文
- *   meta   子级为 toot 时的附加信息
- *   url    子级为 post / video 时的链接
+ *   id / type / tpl / active  公共字段
+ *   head   面板顶部标题
+ *   rows   信息组组面板的 dl 行（无数据时为空数组，模板回落到 empty）
+ *   items  组面板的子项列表，每项 title + value（value 为链接或正文）
+ *   text   说说子项面板的正文
+ *   meta   说说子项面板的附加信息
+ *   url    文章 / 视频子项面板的链接
+ *   empty  空数据提示
  *
  * @param string $kind 数据来源
  *
@@ -197,7 +231,7 @@ function zberOne_GetTabOnePanels($kind = zberOne_base::KIND_ME)
 
     $panels = [];
 
-    // 信息
+    // 信息：组面板即数据源本身的字段行（无子项）
     $one = $data->One();
 
     // 数据不存在时 rows 留空，由模板显示「空数据」
@@ -211,47 +245,80 @@ function zberOne_GetTabOnePanels($kind = zberOne_base::KIND_ME)
     }
 
     $panels[] = [
-        'id' => 'zber-panel-' . $kind . '-one',
+        'id' => zberOne_PanelId($kind, 'one'),
         'type' => 'one',
         'tpl' => 'plugin_zberOne_panel-one',
         'active' => true,
-        'title' => $prefix . '信息',
+        'head' => $prefix . '信息',
+        'rows' => $rows,
         'empty' => (zberOne_base::KIND_ME === $kind)
             ? '暂无数据（' . basename($data->Dir()) . '/one.json）'
             : '暂无数据（' . $slot['name'] . ' id：' . $slot['id'] . '，将来由 id 从外部获取）',
-        'rows' => $rows,
     ];
 
-    // 说说
-    foreach ($data->Toots() as $i => $toot) {
+    // 说说：组面板（列出全部子项）+ 每条的子项面板
+    $toots = $data->Toots();
+    $group = [
+        'id' => zberOne_PanelId($kind, 'toot'),
+        'type' => 'toot',
+        'tpl' => 'plugin_zberOne_panel-group',
+        'active' => false,
+        'head' => $prefix . '说说',
+        'items' => [],
+        'empty' => '（暂无说说）',
+    ];
+    foreach ($toots as $i => $toot) {
+        $title = zberOneTab_TootTitle($toot);
+        $text = isset($toot['text']) ? (string) $toot['text'] : '';
+
+        $group['items'][] = ['title' => $title, 'value' => $text];
+
         $createdAt = isset($toot['created_at']) ? trim((string) $toot['created_at']) : '';
         $panels[] = [
-            'id' => 'zber-panel-' . $kind . '-toot-' . $i,
+            'id' => zberOne_PanelId($kind, 'toot', $i),
             'type' => 'toot',
             'tpl' => 'plugin_zberOne_panel-toot',
             'active' => false,
-            'title' => $prefix . '说说 · ' . zberOneTab_TootTitle($toot),
-            'text' => isset($toot['text']) ? (string) $toot['text'] : '',
+            'head' => $prefix . '说说 · ' . $title,
+            'text' => $text,
             'meta' => '发布时间：' . ('' !== $createdAt ? $createdAt : '—'),
+            'empty' => '（暂无说说）',
         ];
     }
+    $panels[] = $group;
 
-    // 文章 / 视频：条目仅 title + url
+    // 文章 / 视频：组面板（列出全部子项）+ 每条的子项面板
     $entries = [
-        ['type' => 'post', 'label' => $prefix . '文章', 'list' => $data->Posts()],
-        ['type' => 'video', 'label' => $prefix . '视频', 'list' => $data->Videos()],
+        ['type' => 'post', 'label' => $prefix . '文章', 'empty' => '（暂无文章）', 'list' => $data->Posts()],
+        ['type' => 'video', 'label' => $prefix . '视频', 'empty' => '（暂无视频）', 'list' => $data->Videos()],
     ];
     foreach ($entries as $entry) {
+        $group = [
+            'id' => zberOne_PanelId($kind, $entry['type']),
+            'type' => $entry['type'],
+            'tpl' => 'plugin_zberOne_panel-group',
+            'active' => false,
+            'head' => $entry['label'],
+            'items' => [],
+            'empty' => $entry['empty'],
+        ];
         foreach ($entry['list'] as $i => $item) {
+            $title = zberOneTab_EntryTitle($item);
+            $url = isset($item['url']) ? trim((string) $item['url']) : '';
+
+            $group['items'][] = ['title' => $title, 'value' => $url];
+
             $panels[] = [
-                'id' => 'zber-panel-' . $kind . '-' . $entry['type'] . '-' . $i,
+                'id' => zberOne_PanelId($kind, $entry['type'], $i),
                 'type' => $entry['type'],
                 'tpl' => 'plugin_zberOne_panel-link',
                 'active' => false,
-                'title' => $entry['label'] . ' · ' . zberOneTab_EntryTitle($item),
-                'url' => isset($item['url']) ? trim((string) $item['url']) : '',
+                'head' => $entry['label'] . ' · ' . $title,
+                'url' => $url,
+                'empty' => $entry['empty'],
             ];
         }
+        $panels[] = $group;
     }
 
     return $panels;

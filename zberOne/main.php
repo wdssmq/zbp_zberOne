@@ -85,9 +85,66 @@ require $blogpath . 'zb_system/admin/admin_top.php';
     }
   }
 
+  // 切换右栏面板：所有面板都已由模板真实渲染，这里只切 .active 显隐
+  function showPanel(slide, panelId) {
+    if (!panelId) {
+      return;
+    }
+    var panels = slide.querySelectorAll('.zber-one-panel');
+    for (var i = 0; i < panels.length; i++) {
+      if (panels[i].id === panelId) {
+        panels[i].classList.add('active');
+      } else {
+        panels[i].classList.remove('active');
+      }
+    }
+  }
+
+  // 从点击目标向上找祖先（跨自定义元素边界，closest() 在 <ui-tab> 上不可靠）
+  function closestOf(el, selector, boundary) {
+    var node = el;
+    while (node && node !== boundary) {
+      if (node.matches && node.matches(selector)) {
+        return node;
+      }
+      node = node.parentNode;
+    }
+
+    return null;
+  }
+
+  // 从点击目标向上找到左栏里的「子项」或「主项目标题」
+  function closestSide(el, slide) {
+    var node = el;
+    while (node && node !== slide) {
+      if (node.classList && node.classList.contains('zber-one-item')) {
+        return { item: node, trigger: null };
+      }
+      if (node.tagName === 'UI-TAB') {
+        return { item: null, trigger: node };
+      }
+      node = node.parentNode;
+    }
+
+    return null;
+  }
+
+  // 点击左栏：主项目标题（dt）与子项都带 data-panel，指向要显示的右栏面板
+  function onSideClick(el, slide) {
+    var hit = closestSide(el, slide);
+    if (!hit) {
+      return;
+    }
+    var node = hit.item || hit.trigger;
+    var target = closestOf(node, '[data-panel]', slide);
+    if (target) {
+      showPanel(slide, target.getAttribute('data-panel'));
+    }
+  }
+
   root.addEventListener('click', function (e) {
-    var slide = e.target.closest('.zber-one-slide');
-    if (!slide || !root.contains(slide)) {
+    var slide = closestOf(e.target, '.zber-one-slide', root);
+    if (!slide) {
       return;
     }
     var index = Array.prototype.indexOf.call(slides, slide);
@@ -100,25 +157,7 @@ require $blogpath . 'zb_system/admin/admin_top.php';
       return;
     }
     // 激活的左右栏内 → 切换面板
-    var el = e.target.closest('[data-panel]');
-    if (!el) {
-      return;
-    }
-    var panels = slide.querySelectorAll('.zber-one-panel');
-    for (var i = 0; i < panels.length; i++) {
-      panels[i].classList.remove('active');
-    }
-    var target = document.getElementById(el.getAttribute('data-panel'));
-    if (target) {
-      target.classList.add('active');
-    }
-    var items = slide.querySelectorAll('.zber-one-item');
-    for (var j = 0; j < items.length; j++) {
-      items[j].classList.remove('active');
-    }
-    if (el.classList.contains('zber-one-item')) {
-      el.classList.add('active');
-    }
+    onSideClick(e.target, slide);
   });
 
   // 默认显示第一个来源（我）
