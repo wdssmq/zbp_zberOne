@@ -182,9 +182,9 @@ function zberOne_GetTabOneMenu($kind = zberOne_base::KIND_ME)
  * 省略序号 = 该组的组面板（点组标题显示）；带序号 = 该组某条子项的面板。
  * 非数字序号（如 'form'）用于表单等特殊面板，不与数据序号冲突。
  *
- * @param string           $kind 数据来源
- * @param string           $type 子级项目（one / toot / post / video）
- * @param null|int|string  $idx  子项序号；省略表示该组的组面板
+ * @param string          $kind 数据来源
+ * @param string          $type 子级项目（one / toot / post / video）
+ * @param null|int|string $idx  子项序号；省略表示该组的组面板
  *
  * @return string
  */
@@ -235,10 +235,12 @@ function zberOne_FormFields($type)
                 ['name' => 'name', 'label' => '名称'],
                 ['name' => 'description', 'label' => '简介'],
             ];
+
         case zberOne_base::TYPE_TOOT:
             return [
                 ['name' => 'text', 'label' => '内容'],
             ];
+
         case zberOne_base::TYPE_POST:
         case zberOne_base::TYPE_VIDEO:
             return [
