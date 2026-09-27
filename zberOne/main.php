@@ -23,6 +23,8 @@ require $blogpath . 'zb_system/admin/admin_header.php';
 
 require $blogpath . 'zb_system/admin/admin_top.php';
 ?>
+<link rel="stylesheet" href="https://unpkg.com/lu2/theme/edge/css/common/ui.css">
+<script type="module" src="https://unpkg.com/lu2/theme/edge/js/common/all.js"></script>
 <div id="divMain">
     <div class="divHeader">
         <?php echo $blogtitle; ?>
@@ -30,7 +32,7 @@ require $blogpath . 'zb_system/admin/admin_top.php';
     <div class="SubMenu"></div>
     <div id="divMain2">
         <?php
-        require __DIR__ . '/tab_me.php';
+        zberOne_echoTabMe();
         ?>
     </div>
 </div>
