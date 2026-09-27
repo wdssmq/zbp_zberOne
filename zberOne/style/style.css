@@ -1,13 +1,67 @@
-/* 「我」标签页样式（由 tab_me.php 内联样式迁移而来） */
+/* 「一个」标签页样式 */
 
-#zber-me-root {
-    display: flex;
-    align-items: flex-start;
-    gap: 16px;
+/* 滑动容器：一次完整显示一套左右栏；激活项占据主要空间，
+   相邻来源各从左右漏出一条并渐隐（方向相反，见下方 is-before / is-after）。
+   --zber-one-peek 为漏出宽度，滑动位置由脚本按它算出。
+   滑动只改 track 的 transform（不触发布局），容器 overflow: hidden，
+   因此不会向外溢出、也不会改变 #divMain2 及外层的高度与宽度 */
+#zber-one-root {
+    --zber-one-peek: 56px;
+    position: relative;
+    overflow: hidden;
     margin-top: 10px;
 }
 
-#zber-me-root .zber-me-side {
+#zber-one-root .zber-one-pager {
+    width: calc(100% - var(--zber-one-peek));
+}
+
+#zber-one-root .zber-one-track {
+    display: flex;
+    transition: transform .35s ease;
+}
+
+#zber-one-root .zber-one-slide {
+    box-sizing: border-box;
+    flex: 0 0 100%;
+    min-width: 0;
+    padding-right: 14px;
+    transition: opacity .35s ease;
+}
+
+/* 在激活项右侧的来源：向右渐隐 */
+#zber-one-root .zber-one-slide.is-after {
+    opacity: .5;
+    -webkit-mask-image: linear-gradient(to right, rgba(0, 0, 0, .85) 0, rgba(0, 0, 0, 0) 64px);
+    mask-image: linear-gradient(to right, rgba(0, 0, 0, .85) 0, rgba(0, 0, 0, 0) 64px);
+}
+
+/* 在激活项左侧的来源：向左渐隐 */
+#zber-one-root .zber-one-slide.is-before {
+    opacity: .5;
+    -webkit-mask-image: linear-gradient(to left, rgba(0, 0, 0, .85) 0, rgba(0, 0, 0, 0) 64px);
+    mask-image: linear-gradient(to left, rgba(0, 0, 0, .85) 0, rgba(0, 0, 0, 0) 64px);
+}
+
+#zber-one-root .zber-one-head {
+    padding: 0 0 8px 2px;
+    font-size: 14px;
+    color: #333;
+}
+
+#zber-one-root .zber-one-head .zber-one-sid {
+    margin-left: 6px;
+    color: #999;
+    font-size: 12px;
+}
+
+#zber-one-root .zber-one-body {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+}
+
+#zber-one-root .zber-one-side {
     flex: 0 0 220px;
     width: 220px;
     background: #fff;
@@ -16,16 +70,16 @@
     padding: 6px 0;
 }
 
-#zber-me-root .zber-me-main {
+#zber-one-root .zber-one-main {
     flex: 1 1 auto;
     min-width: 0;
 }
 
-#zber-me-root details.zber-me-group details.zber-me-group {
+#zber-one-root details.zber-one-group details.zber-one-group {
     margin-left: 14px;
 }
 
-#zber-me-root summary {
+#zber-one-root summary {
     padding: 6px 12px;
     cursor: pointer;
     font-weight: 600;
@@ -34,11 +88,11 @@
     list-style: revert;
 }
 
-#zber-me-root summary:hover {
+#zber-one-root summary:hover {
     background: #f2f6fc;
 }
 
-#zber-me-root .zber-me-item {
+#zber-one-root .zber-one-item {
     padding: 5px 12px 5px 30px;
     cursor: pointer;
     color: #444;
@@ -47,21 +101,21 @@
     text-overflow: ellipsis;
 }
 
-#zber-me-root .zber-me-item:hover {
+#zber-one-root .zber-one-item:hover {
     background: #f2f6fc;
 }
 
-#zber-me-root .zber-me-item.active {
+#zber-one-root .zber-one-item.active {
     background: #e3edfd;
     color: #1a66b3;
 }
 
-#zber-me-root .zber-me-item-empty {
+#zber-one-root .zber-one-item-empty {
     color: #999;
     cursor: default;
 }
 
-#zber-me-root .zber-me-panel {
+#zber-one-root .zber-one-panel {
     display: none;
     background: #fff;
     border: 1px solid #d8d8d8;
@@ -69,34 +123,34 @@
     padding: 14px 18px;
 }
 
-#zber-me-root .zber-me-panel.active {
+#zber-one-root .zber-one-panel.active {
     display: block;
 }
 
-#zber-me-root .zber-me-panel h3 {
+#zber-one-root .zber-one-panel h3 {
     margin: 0 0 10px;
     font-size: 15px;
 }
 
-#zber-me-root dl {
+#zber-one-root dl {
     margin: 0;
 }
 
-#zber-me-root dt {
+#zber-one-root dt {
     font-weight: 600;
     margin-top: 8px;
 }
 
-#zber-me-root dd {
+#zber-one-root dd {
     margin: 2px 0 0;
     word-break: break-all;
 }
 
-#zber-me-root .zber-me-empty {
+#zber-one-root .zber-one-empty {
     color: #999;
 }
 
-#zber-me-root .zber-me-meta {
+#zber-one-root .zber-one-meta {
     color: #888;
     font-size: 12px;
     margin-top: 10px;

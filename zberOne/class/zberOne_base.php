@@ -3,36 +3,48 @@
 /**
  * zberOne_base — usr-data 目录各主项目数据的读取封装.
  *
- * 数据目录：zberOne/usr-data/
- * 每个主项目一个 json 文件：
- *   me.json        「我」：{id, name, description}
- *   my-toot.json   我的说说：[{text, created_at}]
- *   my-post.json   我的文章：[{title, url}]
- *   my-video.json  我的视频：[{title, url}]
+ * 数据分两级：
+ *   kind  父级，谁的：me（读 usr-data）/ other（将来由 id 从外部获取）
+ *   type  子级，哪一项：one（信息）/ toot（说说）/ post（文章）/ video（视频）
  *
- * Save 系列方法为预留的写入入口，持久化逻辑尚未实现。
+ * 只有「我」的数据落在本地：数据目录 zberOne/usr-data/，每个子项目一个 json
+ *   one.json   信息：{id, name, description}
+ *   toot.json  说说：[{text, created_at}]
+ *   post.json  文章：[{title, url}]
+ *   video.json 视频：[{title, url}]
+ *
+ * Save 系列方法为预留的写入入口，持久化逻辑尚未实现；只接受「我」自己的数据。
  */
 if (!class_exists('zberOne_base')) {
     class zberOne_base
     {
-        /** 「我」 */
-        public const TYPE_ME = 'me';
+        /** 父级来源：「我」 */
+        public const KIND_ME = 'me';
 
-        /** 我的说说 */
-        public const TYPE_TOOT = 'my-toot';
+        /** 父级来源：他人（将来由 id 从外部获取） */
+        public const KIND_OTHER = 'other';
 
-        /** 我的文章 */
-        public const TYPE_POST = 'my-post';
+        /** 子级项目：信息 */
+        public const TYPE_ONE = 'one';
 
-        /** 我的视频 */
-        public const TYPE_VIDEO = 'my-video';
+        /** 子级项目：说说 */
+        public const TYPE_TOOT = 'toot';
+
+        /** 子级项目：文章 */
+        public const TYPE_POST = 'post';
+
+        /** 子级项目：视频 */
+        public const TYPE_VIDEO = 'video';
 
         /**
-         * 当前默认操作的数据类型。
+         * 允许的数据来源列表。
          *
-         * @var string
+         * @var array
          */
-        public $type = '';
+        private static $kinds = [
+            self::KIND_ME,
+            self::KIND_OTHER,
+        ];
 
         /**
          * 允许的数据类型列表。
@@ -40,11 +52,18 @@ if (!class_exists('zberOne_base')) {
          * @var array
          */
         private static $types = [
-            self::TYPE_ME,
+            self::TYPE_ONE,
             self::TYPE_TOOT,
             self::TYPE_POST,
             self::TYPE_VIDEO,
         ];
+
+        /**
+         * 当前数据来源，构造时确定。
+         *
+         * @var string
+         */
+        private $kind = self::KIND_ME;
 
         /**
          * usr-data 目录绝对路径。
@@ -63,13 +82,13 @@ if (!class_exists('zberOne_base')) {
         /**
          * 构造函数。
          *
-         * @param string $type 默认操作的数据类型，可选
+         * @param string $kind 数据来源：KIND_ME（默认）/ KIND_OTHER，无效值回落到 KIND_ME
          */
-        public function __construct($type = '')
+        public function __construct($kind = self::KIND_ME)
         {
             $this->dataDir = dirname(__DIR__) . '/usr-data';
-            if (in_array($type, self::$types, true)) {
-                $this->type = $type;
+            if (in_array($kind, self::$kinds, true)) {
+                $this->kind = $kind;
             }
         }
 
@@ -81,6 +100,16 @@ if (!class_exists('zberOne_base')) {
         public static function Types()
         {
             return self::$types;
+        }
+
+        /**
+         * 当前数据来源。
+         *
+         * @return string
+         */
+        public function Kind()
+        {
+            return $this->kind;
         }
 
         /**
@@ -96,14 +125,13 @@ if (!class_exists('zberOne_base')) {
         /**
          * 指定类型对应的 json 文件路径；类型无效时返回空字符串。
          *
-         * @param null|string $type 为空时使用 $this->type
+         * @param string $type
          *
          * @return string
          */
-        public function Path($type = null)
+        public function Path($type)
         {
-            $type = $this->resolveType($type);
-            if ('' === $type) {
+            if (!in_array($type, self::$types, true)) {
                 return '';
             }
 
@@ -113,14 +141,18 @@ if (!class_exists('zberOne_base')) {
         /**
          * 读取指定类型的数据（带内存缓存）；文件缺失或解析失败时返回空数组。
          *
-         * @param null|string $type 为空时使用 $this->type
+         * 只有「我」的数据来自 usr-data；other 将来由 id 从外部获取，当前恒为空数组。
+         *
+         * @param string $type
          *
          * @return array
          */
-        public function Load($type = null)
+        public function Load($type)
         {
-            $type = $this->resolveType($type);
-            if ('' === $type) {
+            if (self::KIND_ME !== $this->kind) {
+                return [];
+            }
+            if (!in_array($type, self::$types, true)) {
                 return [];
             }
             if (array_key_exists($type, $this->cache)) {
@@ -142,17 +174,17 @@ if (!class_exists('zberOne_base')) {
         }
 
         /**
-         * 「我」。
+         * 信息。
          *
          * @return array
          */
-        public function Me()
+        public function One()
         {
-            return $this->Load(self::TYPE_ME);
+            return $this->Load(self::TYPE_ONE);
         }
 
         /**
-         * 我的说说。
+         * 说说。
          *
          * @return array
          */
@@ -162,7 +194,7 @@ if (!class_exists('zberOne_base')) {
         }
 
         /**
-         * 我的文章。
+         * 文章。
          *
          * @return array
          */
@@ -172,7 +204,7 @@ if (!class_exists('zberOne_base')) {
         }
 
         /**
-         * 我的视频。
+         * 视频。
          *
          * @return array
          */
@@ -188,8 +220,7 @@ if (!class_exists('zberOne_base')) {
          */
         public function ClearCache($type = null)
         {
-            $type = $this->resolveType($type);
-            if ('' === $type) {
+            if (null === $type || '' === $type) {
                 $this->cache = [];
 
                 return;
@@ -200,7 +231,7 @@ if (!class_exists('zberOne_base')) {
         /* ---------- 初始化（安装时生成实际数据文件） ---------- */
 
         /**
-         * 初始化数据文件。
+         * 初始化「我」的数据文件。
          *
          * 目录不存在时创建；文件缺失时按默认结构生成。已有文件一律不覆盖。
          *
@@ -226,23 +257,27 @@ if (!class_exists('zberOne_base')) {
             return true;
         }
 
-        /* ---------- 写入（预留入口，尚未实现） ---------- */
+        /* ---------- 写入（预留入口，尚未实现；只写「我」自己的数据） ---------- */
 
         /**
          * 写入指定类型的数据。
          *
+         * 只有「我」（KIND_ME）有写入入口；other 的数据来自外部，不接受写入。
+         *
          * TODO: json_encode(JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) 后写入；
          *       目录不存在时自动创建。
          *
-         * @param null|string $type 为空时使用 $this->type
-         * @param null|array  $data 待写入的数据
+         * @param string     $type
+         * @param null|array $data 待写入的数据
          *
          * @return bool
          */
-        public function Save($type = null, $data = null)
+        public function Save($type, $data = null)
         {
-            $type = $this->resolveType($type);
-            if ('' === $type) {
+            if (self::KIND_ME !== $this->kind) {
+                return false;
+            }
+            if (!in_array($type, self::$types, true)) {
                 return false;
             }
 
@@ -251,19 +286,19 @@ if (!class_exists('zberOne_base')) {
         }
 
         /**
-         * 写入「我」。
+         * 写入信息。
          *
          * @param null|array $data
          *
          * @return bool
          */
-        public function SaveMe($data = null)
+        public function SaveOne($data = null)
         {
-            return $this->Save(self::TYPE_ME, $data);
+            return $this->Save(self::TYPE_ONE, $data);
         }
 
         /**
-         * 写入我的说说。
+         * 写入说说。
          *
          * @param null|array $data
          *
@@ -275,7 +310,7 @@ if (!class_exists('zberOne_base')) {
         }
 
         /**
-         * 写入我的文章。
+         * 写入文章。
          *
          * @param null|array $data
          *
@@ -287,7 +322,7 @@ if (!class_exists('zberOne_base')) {
         }
 
         /**
-         * 写入我的视频。
+         * 写入视频。
          *
          * @param null|array $data
          *
@@ -307,7 +342,7 @@ if (!class_exists('zberOne_base')) {
          */
         private function defaultData($type)
         {
-            if (self::TYPE_ME === $type) {
+            if (self::TYPE_ONE === $type) {
                 return ['id' => '', 'name' => '', 'description' => ''];
             }
 
@@ -330,25 +365,6 @@ if (!class_exists('zberOne_base')) {
             }
 
             return false !== file_put_contents($path, $json . "\n");
-        }
-
-        /**
-         * 解析数据类型：入参为空时回退到 $this->type；无效类型返回空字符串。
-         *
-         * @param null|string $type
-         *
-         * @return string
-         */
-        private function resolveType($type)
-        {
-            if (null === $type || '' === $type) {
-                $type = $this->type;
-            }
-            if (!in_array($type, self::$types, true)) {
-                return '';
-            }
-
-            return $type;
         }
     }
 }
