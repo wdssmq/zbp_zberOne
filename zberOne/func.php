@@ -340,7 +340,7 @@ function zberOne_echoTabOne($kind = zberOne_base::KIND_ME)
         return;
     }
 
-    $tplName = 'plugin_zberOne_tab-one';
+    $tplName = 'plugin_zberOne_slide-item';
 
     // 模板未编译时先重建，开发期改动 tpl 文件后无需手动刷新
     if (!$zbp->template->HasTemplate($tplName)) {

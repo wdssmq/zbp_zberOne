@@ -6,7 +6,7 @@
         {if $zberOneTabSlot['id'] != ''}<span class="zber-one-sid">id: {zberOneTab_E($zberOneTabSlot['id'])}</span>{/if}
     </div>
     <div class="zber-one-body">
-        {template:plugin_zberOne_menu-side}
-        {template:plugin_zberOne_main-one}
+        {template:plugin_zberOne_one-left}
+        {template:plugin_zberOne_one-right}
     </div>
 </div>
