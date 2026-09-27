@@ -3,4 +3,5 @@
 .workbuddy/
 *.conf
 usr-data/
+var-data/
 vendor/
