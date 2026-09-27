@@ -49,6 +49,16 @@
     color: #333;
 }
 
+#zber-one-root .is-before .zber-one-head {
+    display: flex;
+    justify-content: flex-end;
+}
+
+#zber-one-root .zber-one-head .zber-one-name {
+    font-weight: 600;
+    cursor: pointer;
+}
+
 #zber-one-root .zber-one-head .zber-one-sid {
     margin-left: 6px;
     color: #999;
