@@ -25,6 +25,11 @@ function zberOne_GenTpl(&$templates)
 function InstallPlugin_zberOne()
 {
     global $zbp;
+
+    // 安装时生成数据文件（已有文件不覆盖）
+    $data = new zberOne_base();
+    $data->InitFiles();
+
     if (!$zbp->HasConfig('zberOne')) {
         $zbp->Config('zberOne')->version = '2026.09.26';
         $zbp->SaveConfig('zberOne');

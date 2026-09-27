@@ -197,13 +197,42 @@ if (!class_exists('zberOne_base')) {
             unset($this->cache[$type]);
         }
 
+        /* ---------- 初始化（安装时生成实际数据文件） ---------- */
+
+        /**
+         * 初始化数据文件。
+         *
+         * 目录不存在时创建；文件缺失时按默认结构生成。已有文件一律不覆盖。
+         *
+         * @return bool
+         */
+        public function InitFiles()
+        {
+            if (!is_dir($this->dataDir) && !@mkdir($this->dataDir, 0755, true) && !is_dir($this->dataDir)) {
+                return false;
+            }
+
+            foreach (self::$types as $type) {
+                $path = $this->dataDir . '/' . $type . '.json';
+                if (is_file($path)) {
+                    continue;
+                }
+
+                $this->writeJson($path, $this->defaultData($type));
+            }
+
+            $this->cache = [];
+
+            return true;
+        }
+
         /* ---------- 写入（预留入口，尚未实现） ---------- */
 
         /**
          * 写入指定类型的数据。
          *
          * TODO: json_encode(JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) 后写入；
-         *       目录不存在时自动创建；写入前备份原文件；失败时回滚。
+         *       目录不存在时自动创建。
          *
          * @param null|string $type 为空时使用 $this->type
          * @param null|array  $data 待写入的数据
@@ -267,6 +296,40 @@ if (!class_exists('zberOne_base')) {
         public function SaveVideos($data = null)
         {
             return $this->Save(self::TYPE_VIDEO, $data);
+        }
+
+        /**
+         * 指定类型的默认数据结构。
+         *
+         * @param string $type
+         *
+         * @return array
+         */
+        private function defaultData($type)
+        {
+            if (self::TYPE_ME === $type) {
+                return ['id' => '', 'name' => '', 'description' => ''];
+            }
+
+            return [];
+        }
+
+        /**
+         * 写入 json 文件；Save 系列实现后可直接复用。
+         *
+         * @param string $path
+         * @param array  $data
+         *
+         * @return bool
+         */
+        private function writeJson($path, $data)
+        {
+            $json = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+            if (false === $json) {
+                return false;
+            }
+
+            return false !== file_put_contents($path, $json . "\n");
         }
 
         /**

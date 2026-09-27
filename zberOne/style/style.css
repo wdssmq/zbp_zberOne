@@ -1,0 +1,103 @@
+/* 「我」标签页样式（由 tab_me.php 内联样式迁移而来） */
+
+#zber-me-root {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    margin-top: 10px;
+}
+
+#zber-me-root .zber-me-side {
+    flex: 0 0 220px;
+    width: 220px;
+    background: #fff;
+    border: 1px solid #d8d8d8;
+    border-radius: 4px;
+    padding: 6px 0;
+}
+
+#zber-me-root .zber-me-main {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+#zber-me-root details.zber-me-group details.zber-me-group {
+    margin-left: 14px;
+}
+
+#zber-me-root summary {
+    padding: 6px 12px;
+    cursor: pointer;
+    font-weight: 600;
+    color: #333;
+    user-select: none;
+    list-style: revert;
+}
+
+#zber-me-root summary:hover {
+    background: #f2f6fc;
+}
+
+#zber-me-root .zber-me-item {
+    padding: 5px 12px 5px 30px;
+    cursor: pointer;
+    color: #444;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#zber-me-root .zber-me-item:hover {
+    background: #f2f6fc;
+}
+
+#zber-me-root .zber-me-item.active {
+    background: #e3edfd;
+    color: #1a66b3;
+}
+
+#zber-me-root .zber-me-item-empty {
+    color: #999;
+    cursor: default;
+}
+
+#zber-me-root .zber-me-panel {
+    display: none;
+    background: #fff;
+    border: 1px solid #d8d8d8;
+    border-radius: 4px;
+    padding: 14px 18px;
+}
+
+#zber-me-root .zber-me-panel.active {
+    display: block;
+}
+
+#zber-me-root .zber-me-panel h3 {
+    margin: 0 0 10px;
+    font-size: 15px;
+}
+
+#zber-me-root dl {
+    margin: 0;
+}
+
+#zber-me-root dt {
+    font-weight: 600;
+    margin-top: 8px;
+}
+
+#zber-me-root dd {
+    margin: 2px 0 0;
+    word-break: break-all;
+}
+
+#zber-me-root .zber-me-empty {
+    color: #999;
+}
+
+#zber-me-root .zber-me-meta {
+    color: #888;
+    font-size: 12px;
+    margin-top: 10px;
+}
