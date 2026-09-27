@@ -118,8 +118,10 @@ function zberOne_GetTabOneSlot($kind)
  * 数组结构：
  *   title  菜单标题
  *   type   对应的子级项目（one / toot / post / video）
+ *   id     该组在 DOM 中的唯一 id，即 LuLu <ui-tab> 的 target：zber-group-<kind>-<type>
+ *   name   手风琴分组名，同 kind 的各组互斥展开（同时只开一个）：zber-group-<kind>
  *   panel  顶层项自身对应的面板 id（子项为空的组留空）
- *   open   是否默认展开
+ *   open   是否默认展开（互斥手风琴下只应有一组为 true）
  *   empty  子项为空时的占位文字
  *   items  子项列表，每项 title + panel
  *
@@ -138,11 +140,13 @@ function zberOne_GetTabOneMenu($kind = zberOne_base::KIND_ME)
     $prefix = $slot['label'];
 
     // 菜单结构先定义成数组，再由各主项目数据循环填充子项
+    // id / name 供 LuLu <ui-tab> 手风琴使用：id 是 target，name 相同者互斥展开
+    $groupName = 'zber-group-' . $kind;
     $menu = [
-        ['title' => $prefix . '信息', 'type' => 'one', 'panel' => 'zber-panel-' . $kind . '-one', 'open' => true, 'empty' => '', 'items' => []],
-        ['title' => $prefix . '说说', 'type' => 'toot', 'panel' => '', 'open' => true, 'empty' => '（暂无说说）', 'items' => []],
-        ['title' => $prefix . '文章', 'type' => 'post', 'panel' => '', 'open' => false, 'empty' => '（暂无文章）', 'items' => []],
-        ['title' => $prefix . '视频', 'type' => 'video', 'panel' => '', 'open' => false, 'empty' => '（暂无视频）', 'items' => []],
+        ['title' => $prefix . '信息', 'type' => 'one', 'id' => $groupName . '-one', 'name' => $groupName, 'panel' => 'zber-panel-' . $kind . '-one', 'open' => true, 'empty' => '', 'items' => []],
+        ['title' => $prefix . '说说', 'type' => 'toot', 'id' => $groupName . '-toot', 'name' => $groupName, 'panel' => '', 'open' => false, 'empty' => '（暂无说说）', 'items' => []],
+        ['title' => $prefix . '文章', 'type' => 'post', 'id' => $groupName . '-post', 'name' => $groupName, 'panel' => '', 'open' => false, 'empty' => '（暂无文章）', 'items' => []],
+        ['title' => $prefix . '视频', 'type' => 'video', 'id' => $groupName . '-video', 'name' => $groupName, 'panel' => '', 'open' => false, 'empty' => '（暂无视频）', 'items' => []],
     ];
 
     $listMap = [
