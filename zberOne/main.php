@@ -27,8 +27,10 @@ require $blogpath . 'zb_system/admin/admin_top.php';
 ?>
 <link rel="stylesheet" href="https://unpkg.com/lu2/theme/edge/css/common/ui/Tab.css">
 <link rel="stylesheet" href="https://unpkg.com/lu2/theme/edge/css/common/form.css">
+<link rel="stylesheet" href="https://unpkg.com/lu2/theme/edge/css/common/ui/Tips.css">
 <link rel="stylesheet" href="<?php echo zberOne_Path('style/style.css', 'host'); ?>">
 <script type="module" src="https://unpkg.com/lu2/theme/edge/js/common/ui/Tab.js"></script>
+<script type="module" src="https://unpkg.com/lu2/theme/edge/js/common/ui/Validate.js"></script>
 <div id="divMain">
     <div class="divHeader">
         <?php echo $blogtitle; ?>

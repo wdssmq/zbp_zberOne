@@ -3,9 +3,10 @@
 <h3 class="zber-one-panel-title">{zberOneTab_E($panel['head'])}</h3>
 <form class="zber-one-form" method="post" action="{zberOneTab_E($panel['action'])}" data-zber-form is="ui-form">
     {foreach $panel['fields'] as $field}
+    {php}$type = $field['name'] === 'url' ? 'url' : 'text';{/php}
     <p class="zber-one-field">
         <label class="zber-one-field-label">{zberOneTab_E($field['label'])}</label>
-        <input type="text" class="ui-input" name="{zberOneTab_E($field['name'])}" value="{zberOneTab_E($field['value'])}" />
+        <input type="{$type}" class="ui-input" name="{zberOneTab_E($field['name'])}" value="{zberOneTab_E($field['value'])}" />
     </p>
     {/foreach}
     <p class="zber-one-form-act">
