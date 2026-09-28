@@ -414,6 +414,8 @@ if (!class_exists('zberOne_base')) {
         /**
          * 修改第 $idx 条「说说」。
          *
+         * 发布时间由服务端在写入时刷新，不接受调用方传入。
+         *
          * @param int        $idx  序号
          * @param null|array $data
          *
@@ -426,7 +428,9 @@ if (!class_exists('zberOne_base')) {
             if (!isset($list[$idx])) {
                 return false;
             }
-            $list[$idx] = $this->pick(self::TYPE_TOOT, $data);
+            $item = $this->pick(self::TYPE_TOOT, $data);
+            $item['created_at'] = date('Y-m-d H:i:s');
+            $list[$idx] = $item;
 
             return $this->SaveToots(array_values($list));
         }
