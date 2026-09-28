@@ -115,6 +115,8 @@
         if (activePanelId) {
             showPanel(slide, activePanelId);
         }
+        // 新表单要重新交给 Validate（旧实例随旧元素一起丢了）
+        initForms(slide, slide);
     }
 
     // 发起一次写操作请求，成功后替换整栏；失败提示 err.msg（cmd.php 内置 JSON 格式：{data, err:{code,msg}}）
@@ -144,6 +146,43 @@
     function onFormSubmit(form, slide) {
         const body = new FormData(form);
         requestWrite(slide, form.getAttribute('action'), body);
+    }
+
+    // 从事件目标向上找到所属的 slide 与表单
+    function formContext(target) {
+        const slide = closestOf(target, '.zber-one-slide', root);
+        if (!slide) {
+            return null;
+        }
+        const form = closestOf(target, '[data-zber-form]', slide);
+        if (!form) {
+            return null;
+        }
+
+        return { slide: slide, form: form };
+    }
+
+    // 显式给表单构建验证：校验全部通过时才由回调发起提交，不通过时库自己拦住提交
+    function bindValidator(form, slide) {
+        if ('1' === form.dataset.zberValidate) {
+            return;
+        }
+        // 验证库未就绪（CDN 未加载等）时不做校验，提交照走
+        if ('function' !== typeof window.Validate) {
+            return;
+        }
+        new window.Validate(form, function () {
+            onFormSubmit(form, slide);
+        });
+        form.dataset.zberValidate = '1';
+    }
+
+    // 为范围内的表单构建验证；整栏替换出来的新表单同样要构建
+    function initForms(scope, slide) {
+        const forms = scope.querySelectorAll('[data-zber-form]');
+        for (let i = 0; i < forms.length; i++) {
+            bindValidator(forms[i], slide || closestOf(forms[i], '.zber-one-slide', root));
+        }
     }
 
     // 点击删除：先确认，再带 token 请求
@@ -207,20 +246,28 @@
         onSideClick(e.target, slide);
     });
 
-    // 表单提交无刷新
+    // 表单提交无刷新；已交给 Validate 的表单由它的成功回调负责提交
     root.addEventListener('submit', function (e) {
-        const slide = closestOf(e.target, '.zber-one-slide', root);
-        if (!slide) {
+        const ctx = formContext(e.target);
+        if (!ctx) {
             return;
         }
-        const form = closestOf(e.target, '[data-zber-form]', slide);
-        if (!form) {
+        if ('1' === ctx.form.dataset.zberValidate) {
             return;
         }
         e.preventDefault();
-        onFormSubmit(form, slide);
+        onFormSubmit(ctx.form, ctx.slide);
     });
 
     // 默认显示第一个来源（我）
     activate(0);
+
+    // 验证库是延迟执行的 module，构建验证要等它到位
+    if ('loading' === document.readyState) {
+        document.addEventListener('DOMContentLoaded', function () {
+            initForms(root);
+        });
+    } else {
+        initForms(root);
+    }
 })();
