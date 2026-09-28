@@ -633,7 +633,7 @@ function zberOne_GetTabOnePanel($kind, $panelId, $idx = null)
  * 渲染指定来源里单个面板的 HTML 片段（供右栏按需取用）.
  *
  * 返回面板元素本身（.zber-one-panel），由前端插进右栏；
- * 面板 id 不成立、序号越界（数据已变）时返回空串。与静态渲染共用 tpl/one-panel.php。
+ * 面板 id 不成立、序号越界（数据已变）时返回空串。与静态渲染共用 tpl/panel-shell.php。
  *
  * @param string   $kind    数据来源
  * @param string   $panelId 面板 id
@@ -650,12 +650,12 @@ function zberOne_RenderPanel($kind, $panelId, $idx = null)
         return '';
     }
 
-    $tplName = 'plugin_zberOne_one-panel';
+    $tplName = 'plugin_zberOne_panel-shell';
     if (!$zbp->template->HasTemplate($tplName)) {
         $zbp->BuildTemplate();
     }
 
-    // one-panel.php 读的是调用处的局部 $panel，include 在同一作用域里才拿得到
+    // panel-shell.php 读的是调用处的局部 $panel，include 在同一作用域里才拿得到
     ob_start();
     include $zbp->template->GetTemplate($tplName);
 
