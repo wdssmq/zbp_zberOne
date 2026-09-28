@@ -159,16 +159,31 @@
     cursor: default;
 }
 
+/* 面板外层只管显隐：边框、留白等外观交给内容模板里的 .zber-one-box */
 #zber-one-root .zber-one-panel {
     display: none;
+}
+
+#zber-one-root .zber-one-panel.active {
+    display: block;
+}
+
+/* 面板内容的「框」（标题 + 正文 / 表单 / 空态） */
+#zber-one-root .zber-one-box {
     background: #fff;
     border: 1px solid #d8d8d8;
     border-radius: 4px;
     padding: 14px 18px;
 }
 
-#zber-one-root .zber-one-panel.active {
-    display: block;
+/* 标题是框内最后一个元素时（组面板有数据，表格在框外）不留底距，框贴着标题 */
+#zber-one-root .zber-one-box > h3:last-child {
+    margin-bottom: 0;
+}
+
+/* 框外的表格（组面板）：与框留出与标题一致的间距 */
+#zber-one-root .zber-one-box + .ui-table {
+    margin-top: 10px;
 }
 
 /* 展开的组标题高亮：它同时代表右栏当前内容 */
@@ -182,14 +197,14 @@
     font-size: 15px;
 }
 
-#zber-one-root .zber-one-list {
-    margin: 0;
-    padding-left: 20px;
+/* 组面板的子项列表：LuLu 表格 */
+#zber-one-root .ui-table td {
+    word-break: break-all;
 }
 
-#zber-one-root .zber-one-list li {
-    margin-top: 4px;
-    word-break: break-all;
+/* 单元格里的「编辑 / 删除」并排，首个不留左缩进（.zber-one-op 默认是跟在标题后面的） */
+#zber-one-root .ui-table .zber-one-op:first-child {
+    margin-left: 0;
 }
 
 #zber-one-root dl {
