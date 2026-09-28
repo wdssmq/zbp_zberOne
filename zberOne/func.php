@@ -660,6 +660,7 @@ function zberOne_RenderPanel($kind, $panelId, $idx = null)
 
     // panel-shell.php 读的是调用处的局部 $panel，include 在同一作用域里才拿得到
     ob_start();
+
     include $zbp->template->GetTemplate($tplName);
 
     return ob_get_clean();
