@@ -25,13 +25,14 @@ require $blogpath . 'zb_system/admin/admin_header.php';
 
 require $blogpath . 'zb_system/admin/admin_top.php';
 ?>
-<link rel="stylesheet" href="https://unpkg.com/lu2/theme/edge/css/common/ui/Tab.css">
-<link rel="stylesheet" href="https://unpkg.com/lu2/theme/edge/css/common/form.css">
-<link rel="stylesheet" href="https://unpkg.com/lu2/theme/edge/css/common/ui/Tips.css">
-<link rel="stylesheet" href="https://unpkg.com/lu2/theme/edge/css/common/ui/Table.css">
+<!-- lu2 为本地副本，来源与升级方式见 assets/lu2/SOURCE.md -->
+<link rel="stylesheet" href="<?php echo zberOne_Path('assets/lu2/Tab.css', 'host'); ?>">
+<link rel="stylesheet" href="<?php echo zberOne_Path('assets/lu2/form.css', 'host'); ?>">
+<link rel="stylesheet" href="<?php echo zberOne_Path('assets/lu2/Tips.css', 'host'); ?>">
+<link rel="stylesheet" href="<?php echo zberOne_Path('assets/lu2/Table.css', 'host'); ?>">
 <link rel="stylesheet" href="<?php echo zberOne_Path('style/style.css', 'host'); ?>">
-<script type="module" src="https://unpkg.com/lu2/theme/edge/js/common/ui/Tab.js"></script>
-<script type="module" src="https://unpkg.com/lu2/theme/edge/js/common/ui/Validate.js"></script>
+<script type="module" src="<?php echo zberOne_Path('assets/lu2/Tab.js', 'host'); ?>"></script>
+<script type="module" src="<?php echo zberOne_Path('assets/lu2/Validate.js', 'host'); ?>"></script>
 <div id="divMain">
     <div class="divHeader">
         <?php echo $blogtitle; ?>
