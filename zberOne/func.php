@@ -276,29 +276,19 @@ function zberOne_AjaxUrl($params = [])
 }
 
 /**
- * 「一个」标签页 - 指定来源的右栏内容面板数据.
+ * 「一个」标签页 - 指定来源的右栏静态面板数据（首屏静态渲染用）.
  *
- * 结构与左栏菜单对应，每个可点目标都有对应的已渲染面板：
- *   组面板：每组一条（id = zber-panel-<kind>-<type>），点组标题显示；无数据时自己显示空提示
- *   子项面板：说说 / 文章 / 视频的每条子项一条（id 带序号），点子项显示
- *   表单面板：每组一条（id 带 'form' 后缀），点「添加 / 编辑」显示，添加与编辑复用同一块
- *   信息组没有子项，只有组面板（渲染 source 字段行）
+ * 每组两个面板，数量固定、与数据条数无关：
+ *   组面板（id = zber-panel-<kind>-<type>）   点左栏组标题（dt）时显示，里面列出该组的子项
+ *   表单面板（id 带 'form' 后缀）             新增与编辑共用同一块；静态这块是新增态，
+ *                                             信息组没有「新增」概念，静态就是编辑态
  *
- * 每项结构：
- *   id / type / tpl / active  公共字段
- *   head   面板顶部标题
- *   rows   信息组组面板的 dl 行（无数据时为空数组，模板回落到 empty）
- *   items  组面板的子项列表，每项 title + value + idx + delUrl + formPanel
- *   text   说说子项面板的正文
- *   meta   说说子项面板的附加信息
- *   url    文章 / 视频子项面板的链接
- *   fields 表单面板的字段列表，每项 name + label + value
- *   action 表单面板的提交地址（add 或 update，已带 token）
- *   addUrl 组面板顶部「添加」链接（切到表单面板）
- *   delUrl / formPanel / idx  操作与切换用
- *   empty  空数据提示
+ * 条目级面板（子项展示面板，数量随数据条数增长）不在这里产出，
+ * 改由 zberOne_RenderPanel 按被点到的那个面板 id 单独构建（见 zberOne_GetTabOneItemPanel）：
+ * 取一条说说就只读 toot.json，不必把文章 / 视频的数据一并读进来。
+ * 编辑某条时那块表单面板换成编辑态，同样是按需单取（见 zberOne_GetTabOneForm）。
  *
- * 写入口径：表单面板、addUrl / delUrl / formPanel 只对「我」生成；「他人」恒为空串。
+ * 面板字段见 zberOne_GetTabOneGroupPanel / zberOne_GetTabOneForm。
  *
  * @param string $kind 数据来源
  *
@@ -306,259 +296,370 @@ function zberOne_AjaxUrl($params = [])
  */
 function zberOne_GetTabOnePanels($kind = zberOne_base::KIND_ME)
 {
-    $slot = zberOne_GetTabOneSlot($kind);
-    if (null === $slot) {
-        return [];
-    }
-
-    $data = new zberOne_base($kind);
-    $prefix = $slot['label'];
-    $canWrite = (zberOne_base::KIND_ME === $kind);
-
     $panels = [];
 
-    // 信息：组面板即数据源本身的字段行（无子项）
-    $one = $data->One();
-
-    // 数据不存在时 rows 留空，由模板显示「空数据」
-    $rows = [];
-    if (count($one) > 0) {
-        $rows = [
-            ['label' => 'ID', 'value' => isset($one['id']) ? $one['id'] : ''],
-            ['label' => '名称', 'value' => isset($one['name']) ? $one['name'] : ''],
-            ['label' => '简介', 'value' => isset($one['description']) ? $one['description'] : ''],
-        ];
-    }
-
-    $oneType = zberOne_base::TYPE_ONE;
-    $panels[] = [
-        'id' => zberOne_PanelId($kind, $oneType),
-        'type' => $oneType,
-        'tpl' => 'plugin_zberOne_panel-one',
-        'active' => true,
-        'head' => $prefix . '信息',
-        'rows' => $rows,
-        'formPanel' => $canWrite ? zberOne_PanelId($kind, $oneType, 'form') : '',
-        'empty' => (zberOne_base::KIND_ME === $kind)
-            ? '暂无数据（' . basename($data->Dir()) . '/one.json）'
-            : '暂无数据（' . $slot['name'] . ' id：' . $slot['id'] . '，将来由 id 从外部获取）',
-    ];
-
-    // 信息表单面板（添加 = 编辑，复用；无 idx；只给「我」）
-    if ($canWrite) {
-        $oneFields = [];
-        foreach (zberOne_FormFields($oneType) as $f) {
-            $oneFields[] = [
-                'name' => $f['name'],
-                'label' => $f['label'],
-                'value' => isset($one[$f['name']]) ? (string) $one[$f['name']] : '',
-            ];
+    foreach (zberOne_base::Types() as $type) {
+        $group = zberOne_GetTabOneGroupPanel($kind, $type);
+        if (null !== $group) {
+            $panels[] = $group;
         }
-        $panels[] = [
-            'id' => zberOne_PanelId($kind, $oneType, 'form'),
-            'type' => $oneType,
-            'tpl' => 'plugin_zberOne_panel-form',
-            'active' => false,
-            'head' => $prefix . '信息 · 编辑',
-            'fields' => $oneFields,
-            'action' => zberOne_AjaxUrl(['op' => 'update', 'kind' => $kind, 'type' => $oneType]),
-            'idx' => null,
-            'formPanel' => zberOne_PanelId($kind, $oneType, 'form'),
-            'backPanel' => zberOne_PanelId($kind, $oneType),
-            'empty' => '',
-        ];
-    }
-
-    // 说说：组面板（列出全部子项）+ 每条的子项面板 + 每条的表单面板 + 该组一个添加表单面板
-    $toots = $data->Toots();
-    $tootType = zberOne_base::TYPE_TOOT;
-    $group = [
-        'id' => zberOne_PanelId($kind, $tootType),
-        'type' => $tootType,
-        'tpl' => 'plugin_zberOne_panel-group',
-        'active' => false,
-        'head' => $prefix . '说说',
-        'items' => [],
-        'addUrl' => $canWrite ? zberOne_PanelId($kind, $tootType, 'form') : '',
-        'empty' => '（暂无说说）',
-    ];
-
-    foreach ($toots as $i => $toot) {
-        $title = zberOneTab_TootTitle($toot);
-        $text = isset($toot['text']) ? (string) $toot['text'] : '';
-        $createdAt = isset($toot['created_at']) ? trim((string) $toot['created_at']) : '';
-
-        // 该条的编辑表单面板（与展示面板同前缀，id 用「<序号>-form」后缀避免撞车）
-        $tootFormId = zberOne_PanelId($kind, $tootType, $i . '-form');
-        $tootDelUrl = $canWrite ? zberOne_AjaxUrl(['op' => 'delete', 'kind' => $kind, 'type' => $tootType, 'idx' => $i]) : '';
-        $group['items'][] = [
-            'title' => $title,
-            'value' => $text,
-            'idx' => $i,
-            'delUrl' => $tootDelUrl,
-            'formPanel' => $canWrite ? $tootFormId : '',
-        ];
-
-        // 子项面板（展示 + 编辑/删除入口）
-        $panels[] = [
-            'id' => zberOne_PanelId($kind, $tootType, $i),
-            'type' => $tootType,
-            'tpl' => 'plugin_zberOne_panel-toot',
-            'active' => false,
-            'head' => $prefix . '说说 · ' . $title,
-            'text' => $text,
-            'meta' => '发布时间：' . ('' !== $createdAt ? $createdAt : '—'),
-            'idx' => $i,
-            'delUrl' => $tootDelUrl,
-            'formPanel' => $canWrite ? $tootFormId : '',
-        ];
-
-        if (!$canWrite) {
-            continue;
+        $form = zberOne_GetTabOneForm($kind, $type);
+        if (null !== $form) {
+            $panels[] = $form;
         }
-
-        // 该条的编辑表单面板（预填现值）
-        $tootFields = [];
-        foreach (zberOne_FormFields($tootType) as $f) {
-            $tootFields[] = [
-                'name' => $f['name'],
-                'label' => $f['label'],
-                'value' => isset($toot[$f['name']]) ? (string) $toot[$f['name']] : '',
-            ];
-        }
-        $panels[] = [
-            'id' => $tootFormId,
-            'type' => $tootType,
-            'tpl' => 'plugin_zberOne_panel-form',
-            'active' => false,
-            'head' => $prefix . '说说 · 编辑',
-            'fields' => $tootFields,
-            'action' => zberOne_AjaxUrl(['op' => 'update', 'kind' => $kind, 'type' => $tootType, 'idx' => $i]),
-            'idx' => $i,
-            'formPanel' => $tootFormId,
-            'backPanel' => zberOne_PanelId($kind, $tootType),
-            'empty' => '',
-        ];
-    }
-
-    // 该组的添加表单面板（form 后缀；只给「我」）
-    if ($canWrite) {
-        $addFields = [];
-        foreach (zberOne_FormFields($tootType) as $f) {
-            $addFields[] = ['name' => $f['name'], 'label' => $f['label'], 'value' => ''];
-        }
-        $panels[] = [
-            'id' => zberOne_PanelId($kind, $tootType, 'form'),
-            'type' => $tootType,
-            'tpl' => 'plugin_zberOne_panel-form',
-            'active' => false,
-            'head' => $prefix . '说说 · 添加',
-            'fields' => $addFields,
-            'action' => zberOne_AjaxUrl(['op' => 'add', 'kind' => $kind, 'type' => $tootType]),
-            'idx' => null,
-            'formPanel' => zberOne_PanelId($kind, $tootType, 'form'),
-            'backPanel' => zberOne_PanelId($kind, $tootType),
-            'empty' => '',
-        ];
-    }
-
-    $panels[] = $group;
-
-    // 文章 / 视频：组面板 + 每条的子项面板 + 每条的表单面板 + 该组一个添加表单面板
-    $entries = [
-        ['type' => zberOne_base::TYPE_POST, 'label' => $prefix . '文章', 'empty' => '（暂无文章）', 'list' => $data->Posts()],
-        ['type' => zberOne_base::TYPE_VIDEO, 'label' => $prefix . '视频', 'empty' => '（暂无视频）', 'list' => $data->Videos()],
-    ];
-    foreach ($entries as $entry) {
-        $etype = $entry['type'];
-        $group = [
-            'id' => zberOne_PanelId($kind, $etype),
-            'type' => $etype,
-            'tpl' => 'plugin_zberOne_panel-group',
-            'active' => false,
-            'head' => $entry['label'],
-            'items' => [],
-            'addUrl' => $canWrite ? zberOne_PanelId($kind, $etype, 'form') : '',
-            'empty' => $entry['empty'],
-        ];
-        foreach ($entry['list'] as $i => $item) {
-            $title = zberOneTab_EntryTitle($item);
-            $url = isset($item['url']) ? trim((string) $item['url']) : '';
-
-            $entryFormId = zberOne_PanelId($kind, $etype, $i . '-form');
-            $entryDelUrl = $canWrite ? zberOne_AjaxUrl(['op' => 'delete', 'kind' => $kind, 'type' => $etype, 'idx' => $i]) : '';
-            $group['items'][] = [
-                'title' => $title,
-                'value' => $url,
-                'idx' => $i,
-                'delUrl' => $entryDelUrl,
-                'formPanel' => $canWrite ? $entryFormId : '',
-            ];
-
-            $panels[] = [
-                'id' => zberOne_PanelId($kind, $etype, $i),
-                'type' => $etype,
-                'tpl' => 'plugin_zberOne_panel-link',
-                'active' => false,
-                'head' => $entry['label'] . ' · ' . $title,
-                'url' => $url,
-                'idx' => $i,
-                'delUrl' => $entryDelUrl,
-                'formPanel' => $canWrite ? $entryFormId : '',
-            ];
-
-            if (!$canWrite) {
-                continue;
-            }
-
-            $entryFields = [];
-            foreach (zberOne_FormFields($etype) as $f) {
-                $entryFields[] = [
-                    'name' => $f['name'],
-                    'label' => $f['label'],
-                    'value' => isset($item[$f['name']]) ? (string) $item[$f['name']] : '',
-                ];
-            }
-            $panels[] = [
-                'id' => $entryFormId,
-                'type' => $etype,
-                'tpl' => 'plugin_zberOne_panel-form',
-                'active' => false,
-                'head' => $entry['label'] . ' · 编辑',
-                'fields' => $entryFields,
-                'action' => zberOne_AjaxUrl(['op' => 'update', 'kind' => $kind, 'type' => $etype, 'idx' => $i]),
-                'idx' => $i,
-                'formPanel' => $entryFormId,
-                'backPanel' => zberOne_PanelId($kind, $etype),
-                'empty' => '',
-            ];
-        }
-
-        // 该组的添加表单面板（只给「我」）
-        if ($canWrite) {
-            $addFields = [];
-            foreach (zberOne_FormFields($etype) as $f) {
-                $addFields[] = ['name' => $f['name'], 'label' => $f['label'], 'value' => ''];
-            }
-            $panels[] = [
-                'id' => zberOne_PanelId($kind, $etype, 'form'),
-                'type' => $etype,
-                'tpl' => 'plugin_zberOne_panel-form',
-                'active' => false,
-                'head' => $entry['label'] . ' · 添加',
-                'fields' => $addFields,
-                'action' => zberOne_AjaxUrl(['op' => 'add', 'kind' => $kind, 'type' => $etype]),
-                'idx' => null,
-                'formPanel' => zberOne_PanelId($kind, $etype, 'form'),
-                'backPanel' => zberOne_PanelId($kind, $etype),
-                'empty' => '',
-            ];
-        }
-
-        $panels[] = $group;
     }
 
     return $panels;
+}
+
+/**
+ * 取指定来源下某个类型的数据列表（只读该类型自己的 json）.
+ *
+ * @param string $kind 数据来源
+ * @param string $type 子级项目；信息是单对象不是列表，恒返回空数组
+ *
+ * @return array
+ */
+function zberOne_GetTabOneList($kind, $type)
+{
+    $data = new zberOne_base($kind);
+
+    switch ($type) {
+        case zberOne_base::TYPE_TOOT:
+            return $data->Toots();
+
+        case zberOne_base::TYPE_POST:
+            return $data->Posts();
+
+        case zberOne_base::TYPE_VIDEO:
+            return $data->Videos();
+    }
+
+    return [];
+}
+
+/**
+ * 单个组面板：点左栏组标题（dt）时显示的那个.
+ *
+ * 信息组渲染数据源本身的字段行（无子项）；说说 / 文章 / 视频渲染该组的子项列表。
+ * 只读该类型自己的数据，不牵连其它类型。
+ *
+ * 面板字段：
+ *   id / type / tpl / active / formIdx    公共字段（tpl 为模板注册名）
+ *   formIdx                                该面板当前绑定的编辑对象序号，只有表单面板的编辑态有值
+ *                                          （null 表示「这块面板不代表某条数据」）；
+ *                                          模板据此往元素上打 data-zber-idx，前端靠它判断态对不对
+ *   formPanel                         信息组的「编辑」入口（信息没有子项，编辑入口挂在组面板上）
+ *   rows                              信息组：字段行（无数据时为空数组，模板回落到 empty）
+ *   items                             其余组：子项列表，每项 title + value + idx + delUrl + formPanel + editIdx
+ *   addUrl                            其余组：组面板顶部「添加」链接（指向表单面板的新增态）
+ *   empty                             该组无数据时的提示
+ *
+ * 写入口径：addUrl / formPanel / delUrl 只对「我」生成，「他人」恒为空串。
+ * formPanel 是新增与编辑共用的那块表单面板 id；editIdx 是「点编辑要改哪一条」的序号
+ * （前端拿它把这块面板换成编辑态），点「添加」时不带。
+ *
+ * @param string $kind 数据来源
+ * @param string $type 子级项目（one / toot / post / video）
+ *
+ * @return null|array 来源或类型无效时返回 null
+ */
+function zberOne_GetTabOneGroupPanel($kind, $type)
+{
+    $slot = zberOne_GetTabOneSlot($kind);
+    if (null === $slot || !in_array($type, zberOne_base::Types(), true)) {
+        return null;
+    }
+
+    $canWrite = (zberOne_base::KIND_ME === $kind);
+    $panel = [
+        'id' => zberOne_PanelId($kind, $type),
+        'type' => $type,
+        'tpl' => '',
+        'active' => (zberOne_base::TYPE_ONE === $type),
+        'formIdx' => null,
+        'head' => $slot['label'] . zberOne_TypeLabel($type),
+        'formPanel' => '',
+        'rows' => [],
+        'items' => [],
+        'addUrl' => '',
+        'empty' => '',
+    ];
+
+    // 信息组：组面板即数据源本身的字段行
+    if (zberOne_base::TYPE_ONE === $type) {
+        $data = new zberOne_base($kind);
+        $one = $data->One();
+        if (count($one) > 0) {
+            $panel['rows'] = [
+                ['label' => 'ID', 'value' => isset($one['id']) ? $one['id'] : ''],
+                ['label' => '名称', 'value' => isset($one['name']) ? $one['name'] : ''],
+                ['label' => '简介', 'value' => isset($one['description']) ? $one['description'] : ''],
+            ];
+        }
+        $panel['tpl'] = 'plugin_zberOne_panel-one';
+        $panel['formPanel'] = $canWrite ? zberOne_PanelId($kind, $type, 'form') : '';
+        $panel['empty'] = $canWrite
+            ? '暂无数据（' . basename($data->Dir()) . '/one.json）'
+            : '暂无数据（' . $slot['name'] . ' id：' . $slot['id'] . '，将来由 id 从外部获取）';
+
+        return $panel;
+    }
+
+    // 其余组：组面板列出该组全部子项
+    $panel['tpl'] = 'plugin_zberOne_panel-group';
+    foreach (zberOne_GetTabOneList($kind, $type) as $i => $item) {
+        $panel['items'][] = [
+            'title' => (zberOne_base::TYPE_TOOT === $type) ? zberOneTab_TootTitle($item) : zberOneTab_EntryTitle($item),
+            'value' => (zberOne_base::TYPE_TOOT === $type)
+                ? (isset($item['text']) ? (string) $item['text'] : '')
+                : (isset($item['url']) ? trim((string) $item['url']) : ''),
+            'idx' => $i,
+            'delUrl' => $canWrite ? zberOne_AjaxUrl(['op' => 'delete', 'kind' => $kind, 'type' => $type, 'idx' => $i]) : '',
+            'formPanel' => $canWrite ? zberOne_PanelId($kind, $type, 'form') : '',
+            'editIdx' => $canWrite ? $i : null,
+        ];
+    }
+    $panel['addUrl'] = $canWrite ? zberOne_PanelId($kind, $type, 'form') : '';
+    $panel['empty'] = '（暂无' . zberOne_TypeLabel($type) . '）';
+
+    return $panel;
+}
+
+/**
+ * 单个表单面板：新增与编辑共用这一块（id 恒为 zber-panel-<kind>-<type>-form）.
+ *
+ * $idx 为空 = 新增态：字段留空、提交到 op=add；
+ * $idx 有值 = 编辑态：预填该条现值、提交到 op=update&idx=<序号>。
+ * 信息组是单对象、没有「新增」一说，$idx 为空时也走编辑态（预填现值 + op=update）。
+ * 序号越界（数据刚被改过或删掉）时返回 null，由调用处当作「面板不存在」。
+ *
+ * 面板字段：
+ *   id / type / tpl / active / head   公共字段（head 带「添加」或「编辑」）
+ *   formIdx                           该面板当前代表的编辑对象序号；新增态为 null
+ *   fields                            字段列表，每项 name + label + value
+ *   action                            提交地址（已带 token）
+ *   formPanel / backPanel             自身的面板 id / 「取消」回到的组面板 id
+ *   empty                             恒为空串（表单面板不由 empty 兜底）
+ *
+ * 只有「我」有写入入口，「他人」返回 null。
+ *
+ * @param string   $kind 数据来源
+ * @param string   $type 子级项目（one / toot / post / video）
+ * @param null|int $idx  要编辑的序号；省略 = 新增态
+ *
+ * @return null|array 来源 / 类型无效、不是「我」，或序号越界时返回 null
+ */
+function zberOne_GetTabOneForm($kind, $type, $idx = null)
+{
+    $slot = zberOne_GetTabOneSlot($kind);
+    if (null === $slot || !in_array($type, zberOne_base::Types(), true)) {
+        return null;
+    }
+    if (zberOne_base::KIND_ME !== $kind) {
+        return null;
+    }
+
+    // one 是单对象，没有「新增」：$idx 为空时也按编辑处理并预填现值
+    $isOne = (zberOne_base::TYPE_ONE === $type);
+    $isEdit = true;
+    $editIdx = null;
+
+    if (null !== $idx) {
+        // 信息没有列表（zberOne_GetTabOneList 恒为空），传了序号自然落到「不存在」
+        $list = zberOne_GetTabOneList($kind, $type);
+        $idx = (int) $idx;
+        if (!isset($list[$idx])) {
+            return null;
+        }
+        $item = $list[$idx];
+        $editIdx = $idx;
+    } elseif ($isOne) {
+        $item = (new zberOne_base($kind))->One();
+    } else {
+        $item = [];
+        $isEdit = false;
+    }
+
+    $fields = [];
+    foreach (zberOne_FormFields($type) as $f) {
+        $fields[] = [
+            'name' => $f['name'],
+            'label' => $f['label'],
+            'value' => isset($item[$f['name']]) ? (string) $item[$f['name']] : '',
+        ];
+    }
+
+    $params = ['op' => ($isEdit ? 'update' : 'add'), 'kind' => $kind, 'type' => $type];
+    if (null !== $editIdx) {
+        $params['idx'] = $editIdx;
+    }
+
+    return [
+        'id' => zberOne_PanelId($kind, $type, 'form'),
+        'type' => $type,
+        'tpl' => 'plugin_zberOne_panel-form',
+        'active' => false,
+        'formIdx' => $editIdx,
+        'head' => $slot['label'] . zberOne_TypeLabel($type) . ($isEdit ? ' · 编辑' : ' · 添加'),
+        'fields' => $fields,
+        'action' => zberOne_AjaxUrl($params),
+        'formPanel' => zberOne_PanelId($kind, $type, 'form'),
+        'backPanel' => zberOne_PanelId($kind, $type),
+        'empty' => '',
+    ];
+}
+
+/**
+ * 单个条目级展示面板：说说 / 文章 / 视频里的某一条.
+ *
+ * 由 zberOne_RenderPanel 按被点到的面板 id 单条构建，只读该类型自己的数据。
+ * 序号越界（数据刚被改过或删掉了）时返回 null，由调用处当作「面板不存在」。
+ * 编辑该条用的表单不在这里 —— 新增与编辑共用组里的那块表单面板，
+ * 这里只给出 formPanel（表单面板 id）与 editIdx（该条序号）供前端切到编辑态。
+ *
+ * 面板字段：id / type / tpl / active / head / idx / editIdx / formPanel / delUrl，
+ *   说说另有 text + meta，文章 / 视频另有 url。
+ *   editIdx 给「编辑」入口用（换成编辑态时带的序号）；formIdx 恒为 null ——
+ *   展示面板不代表编辑态，别让前端把它当成「已经是编辑某条的态」。
+ *
+ * @param string $kind 数据来源
+ * @param string $type 子级项目（toot / post / video；信息没有条目级面板）
+ * @param int    $idx  子项序号
+ *
+ * @return null|array 来源 / 类型无效或数据不存在时返回 null
+ */
+function zberOne_GetTabOneItemPanel($kind, $type, $idx)
+{
+    $slot = zberOne_GetTabOneSlot($kind);
+    if (null === $slot || zberOne_base::TYPE_ONE === $type) {
+        return null;
+    }
+
+    $idx = (int) $idx;
+    $list = zberOne_GetTabOneList($kind, $type);
+    if (!isset($list[$idx])) {
+        return null;
+    }
+
+    $canWrite = (zberOne_base::KIND_ME === $kind);
+    $item = $list[$idx];
+    $isToot = (zberOne_base::TYPE_TOOT === $type);
+    $title = $isToot ? zberOneTab_TootTitle($item) : zberOneTab_EntryTitle($item);
+    $panel = [
+        'id' => zberOne_PanelId($kind, $type, $idx),
+        'type' => $type,
+        'tpl' => $isToot ? 'plugin_zberOne_panel-toot' : 'plugin_zberOne_panel-link',
+        'active' => false,
+        'idx' => $idx,
+        'editIdx' => $canWrite ? $idx : null,
+        'formIdx' => null,
+        'head' => $slot['label'] . zberOne_TypeLabel($type) . ' · ' . $title,
+        'delUrl' => $canWrite ? zberOne_AjaxUrl(['op' => 'delete', 'kind' => $kind, 'type' => $type, 'idx' => $idx]) : '',
+        'formPanel' => $canWrite ? zberOne_PanelId($kind, $type, 'form') : '',
+    ];
+
+    if ($isToot) {
+        $createdAt = isset($item['created_at']) ? trim((string) $item['created_at']) : '';
+        $panel['text'] = isset($item['text']) ? (string) $item['text'] : '';
+        $panel['meta'] = '发布时间：' . ('' !== $createdAt ? $createdAt : '—');
+    } else {
+        $panel['url'] = isset($item['url']) ? trim((string) $item['url']) : '';
+    }
+
+    return $panel;
+}
+
+/**
+ * 按面板 id 只构建那一个面板（组面板 / 表单面板 / 条目展示面板）.
+ *
+ * 面板 id 的构成见 zberOne_PanelId：
+ *   zber-panel-<kind>-<type>          组面板
+ *   zber-panel-<kind>-<type>-form     表单面板（新增与编辑共用一块），态由 $idx 决定
+ *   zber-panel-<kind>-<type>-<序号>   条目级展示面板
+ *
+ * @param string   $kind
+ * @param string   $panelId
+ * @param null|int $idx     只对表单面板有意义：要编辑的序号；省略 = 新增态
+ *
+ * @return null|array 面板 id 不成立时返回 null
+ */
+function zberOne_GetTabOnePanel($kind, $panelId, $idx = null)
+{
+    if (null === zberOne_GetTabOneSlot($kind)) {
+        return null;
+    }
+
+    // 剥掉 'zber-panel-<kind>-' 后剩下的就是 <type>、<type>-form 或 <type>-<序号>
+    $prefix = 'zber-panel-' . $kind . '-';
+    $panelId = (string) $panelId;
+    if (0 !== strpos($panelId, $prefix)) {
+        return null;
+    }
+
+    $parts = explode('-', substr($panelId, strlen($prefix)));
+    $type = array_shift($parts);
+    if (!in_array($type, zberOne_base::Types(), true)) {
+        return null;
+    }
+
+    // 表单面板：序号不作 id 的一部分（否则新增与编辑就成了两块），只从参数进来
+    if (['form'] === $parts) {
+        if (null !== $idx) {
+            $idx = (string) $idx;
+            if ('' === $idx || !ctype_digit($idx)) {
+                return null;
+            }
+            $idx = (int) $idx;
+        }
+
+        return zberOne_GetTabOneForm($kind, $type, $idx);
+    }
+
+    // 无序号 = 这个组的组面板
+    if ([] === $parts) {
+        return zberOne_GetTabOneGroupPanel($kind, $type);
+    }
+
+    // 一个纯数字序号 = 该组的某条子项展示面板
+    if (1 === count($parts) && ctype_digit($parts[0])) {
+        return zberOne_GetTabOneItemPanel($kind, $type, (int) $parts[0]);
+    }
+
+    return null;
+}
+
+/**
+ * 渲染指定来源里单个面板的 HTML 片段（供右栏按需取用）.
+ *
+ * 返回面板元素本身（.zber-one-panel），由前端插进右栏；
+ * 面板 id 不成立、序号越界（数据已变）时返回空串。与静态渲染共用 tpl/one-panel.php。
+ *
+ * @param string   $kind    数据来源
+ * @param string   $panelId 面板 id
+ * @param null|int $idx     只对表单面板有意义：要编辑的序号；省略 = 新增态
+ *
+ * @return string
+ */
+function zberOne_RenderPanel($kind, $panelId, $idx = null)
+{
+    global $zbp;
+
+    $panel = zberOne_GetTabOnePanel($kind, $panelId, $idx);
+    if (null === $panel) {
+        return '';
+    }
+
+    $tplName = 'plugin_zberOne_one-panel';
+    if (!$zbp->template->HasTemplate($tplName)) {
+        $zbp->BuildTemplate();
+    }
+
+    // one-panel.php 读的是调用处的局部 $panel，include 在同一作用域里才拿得到
+    ob_start();
+    include $zbp->template->GetTemplate($tplName);
+
+    return ob_get_clean();
 }
 
 /**
@@ -568,6 +669,8 @@ function zberOne_GetTabOnePanels($kind = zberOne_base::KIND_ME)
  * 由前端整体替换对应容器，避免把容器套进容器里。
  * 两段都从同一次 GetTabOneMenu / GetTabOnePanels 取数，
  * 保证菜单项 data-panel 与面板 id 成对一致。
+ * 右栏只渲染静态面板（组面板 + 新增态表单面板），
+ * 条目展示面板与表单面板的编辑态由 zberOne_RenderPanel 按需单取。
  *
  * @param string $kind 数据来源
  *
@@ -630,6 +733,9 @@ function zberOne_echoTabOne($kind = zberOne_base::KIND_ME)
     $zbp->template->SetTags('zberOneTabSlot', $slot);
     $zbp->template->SetTags('zberOneTabMenu', zberOne_GetTabOneMenu($kind));
     $zbp->template->SetTags('zberOneTabPanels', zberOne_GetTabOnePanels($kind));
+    // 条目展示面板与表单面板的编辑态都按需单取，
+    // 基址（含 token 与 kind）挂在 slide 上，脚本只需再补 panel=<id>（编辑态再加 idx=<序号>）
+    $zbp->template->SetTags('zberOneTabAjaxUrl', zberOne_AjaxUrl(['op' => 'panel', 'kind' => $kind]));
 
     $zbp->template->Display($tplName);
 }
@@ -655,6 +761,7 @@ function zberOne_ReadPostFields($type)
  * cmd.php ajax 入口（act=ajax&src=zberOne）：权限与 CSRF 校验后分派，按内置 JsonReturn/JsonError 输出.
  *
  * cmd.php 的 ajax 动作只要求访客级权限，写操作必须在这里自行补校验。
+ * op=panel 是只读的取面板，其余 op 是写操作。
  *
  * @param string $src cmd.php 传来的来源标识
  */
@@ -670,6 +777,20 @@ function zberOne_CmdAjax($src)
     }
     if (!CheckCSRFTokenValid()) {
         JsonError(5, 'CSRF 校验失败', null);
+    }
+
+    // 取单个面板：静态只渲染组面板与表单面板（新增态），
+    // 条目展示面板、以及表单面板的编辑态都点开时才由这里给（编辑态靠 idx 参数）
+    if ('panel' === (string) GetVars('op', 'GET', '')) {
+        $panelId = (string) GetVars('panel', 'GET', '');
+        $idx = GetVars('idx', 'GET', null);
+        $html = zberOne_RenderPanel((string) GetVars('kind', 'GET', zberOne_base::KIND_ME), $panelId, $idx);
+        if ('' === $html) {
+            JsonError(1, '面板不存在', null);
+        }
+        JsonReturn(['panel' => $html, 'id' => $panelId]);
+
+        return;
     }
 
     $result = zberOne_Ajax();

@@ -9,7 +9,7 @@
     {foreach $panel['items'] as $row}
     <li>
         {zberOneTab_E($row['title'])}
-        {if $row['formPanel'] != ''}<a class="zber-one-op" href="#" data-zber-edit data-panel="{$row['formPanel']}">编辑</a>{/if}
+        {if $row['formPanel'] != ''}<a class="zber-one-op" href="#" data-zber-edit data-panel="{$row['formPanel']}" data-zber-idx="{$row['editIdx']}">编辑</a>{/if}
         {if $row['delUrl'] != ''}<a class="zber-one-op" href="{zberOneTab_E($row['delUrl'])}" data-zber-del data-type="{$panel['type']}" data-idx="{$row['idx']}">删除</a>{/if}
     </li>
     {/foreach}
