@@ -1,4 +1,4 @@
-// 「一个」标签页的滑动与面板切换
+// 「一个」标签页的滑动、面板切换与条目级面板的按需取回
 (function () {
     const root = document.getElementById('zber-one-root');
     if (!root) {
@@ -49,6 +49,100 @@
         }
     }
 
+    // 面板按需取回：静态只渲染组面板与新增态表单面板，其余点开时才取
+    // 取回的是面板元素本身（与静态渲染共用同一模板），插进右栏后再切 active
+    // 每块面板记一个「最近一次请求的态」，用来挡连点、并丢弃被新意图取代的迟到响应
+    const pendingPanels = new Map();
+
+    function findPanel(slide, panelId) {
+        const main = slide.querySelector('.zber-one-main');
+        return main ? main.querySelector('.zber-one-panel[data-panel="' + panelId + '"]') : null;
+    }
+
+    // 面板当前的编辑对象序号；没有该标记 = null（组面板、新增态表单、条目展示面板）
+    function panelIdx(panel) {
+        const raw = panel.getAttribute('data-zber-idx');
+        return (null === raw || '' === raw) ? null : parseInt(raw, 10);
+    }
+
+    function insertPanel(slide, html, panelId, idx) {
+        const main = slide.querySelector('.zber-one-main');
+        if (!main) {
+            return;
+        }
+        const holder = document.createElement('div');
+        holder.innerHTML = html;
+        const panel = holder.firstElementChild;
+        // 片段必须正好是这一个面板、且态对得上，否则宁可不插（免得把异常输出塞进右栏）
+        if (!panel || panelId !== panel.getAttribute('data-panel') || panelIdx(panel) !== idx) {
+            return;
+        }
+        // 新增与编辑共用同一块表单面板：右栏已有同 id 的那块时换掉它，不是再插一块
+        const exist = findPanel(slide, panelId);
+        if (exist) {
+            exist.replaceWith(panel);
+        } else {
+            main.appendChild(panel);
+        }
+        showPanel(slide, panelId);
+        initForms(panel, slide);
+    }
+
+    function loadPanel(slide, panelId, idx) {
+        const base = slide.getAttribute('data-zber-ajax') || '';
+        if (!base) {
+            return;
+        }
+        const key = panelId + '#' + (null === idx ? '' : idx);
+        // 同一块面板的同一个态还在路上时重复点只发一次请求
+        if (pendingPanels.get(panelId) === key) {
+            return;
+        }
+        pendingPanels.set(panelId, key);
+
+        let url = base + '&panel=' + encodeURIComponent(panelId);
+        if (null !== idx) {
+            url += '&idx=' + encodeURIComponent(idx);
+        }
+
+        fetch(url, { credentials: 'same-origin' })
+            .then(function (res) { return res.json(); })
+            .then(function (json) {
+                // 期间又点了别的态 → 这次的响应已经过时，丢掉
+                if (pendingPanels.get(panelId) !== key) {
+                    return;
+                }
+                pendingPanels.delete(panelId);
+                if (!json || !json.err || json.err.code !== 0 || !json.data || !json.data.panel) {
+                    window.alert((json && json.err && json.err.msg) ? json.err.msg : '面板加载失败');
+
+                    return;
+                }
+                insertPanel(slide, json.data.panel, panelId, idx);
+            })
+            .catch(function () {
+                if (pendingPanels.get(panelId) === key) {
+                    pendingPanels.delete(panelId);
+                }
+                window.alert('面板加载失败');
+            });
+    }
+
+    // 面板已在右栏里、且态与目标一致就直接切，否则取回来再切
+    // idx 省略 = 不关心态（组面板 / 条目展示面板）；传 null = 表单面板的新增态
+    function showOrLoadPanel(slide, panelId, idx) {
+        if (!panelId) {
+            return;
+        }
+        const panel = findPanel(slide, panelId);
+        if (panel && (undefined === idx || panelIdx(panel) === idx)) {
+            showPanel(slide, panelId);
+
+            return;
+        }
+        loadPanel(slide, panelId, (undefined === idx) ? null : idx);
+    }
+
     // 从点击目标向上找祖先（跨自定义元素边界，closest() 在 <ui-tab> 上不可靠）
     function closestOf(el, selector, boundary) {
         let node = el;
@@ -93,7 +187,7 @@
         const node = hit.item || hit.trigger;
         const target = closestOf(node, '[data-panel]', slide);
         if (target) {
-            showPanel(slide, target.getAttribute('data-panel'));
+            showOrLoadPanel(slide, target.getAttribute('data-panel'));
         }
     }
 
@@ -113,7 +207,7 @@
             }
         }
         if (activePanelId) {
-            showPanel(slide, activePanelId);
+            showOrLoadPanel(slide, activePanelId);
         }
         // 新表单要重新交给 Validate（旧实例随旧元素一起丢了）
         initForms(slide, slide);
@@ -193,12 +287,15 @@
         requestWrite(slide, link.getAttribute('href'), null);
     }
 
-    // 点击「添加 / 编辑」：切到对应的表单面板
-    function onEditToggle(el, slide) {
+    // 点击「添加 / 编辑」：切到那块新增与编辑共用的表单面板
+    // 「添加」不带 data-zber-idx（要新增态），「编辑」带上要改的那条的序号（要编辑态）
+    function onFormOpen(el, slide) {
         const panelId = el.getAttribute('data-panel');
-        if (panelId) {
-            showPanel(slide, panelId);
+        if (!panelId) {
+            return;
         }
+        const idx = parseInt(el.getAttribute('data-zber-idx'), 10);
+        showOrLoadPanel(slide, panelId, Number.isInteger(idx) ? idx : null);
     }
 
     root.addEventListener('click', function (e) {
@@ -226,19 +323,19 @@
         const editLink = closestOf(e.target, '[data-zber-edit]', slide);
         if (editLink) {
             e.preventDefault();
-            onEditToggle(editLink, slide);
+            onFormOpen(editLink, slide);
             return;
         }
         const addLink = closestOf(e.target, '[data-zber-add]', slide);
         if (addLink) {
             e.preventDefault();
-            onEditToggle(addLink, slide);
+            onFormOpen(addLink, slide);
             return;
         }
         const cancelBtn = closestOf(e.target, '[data-zber-cancel]', slide);
         if (cancelBtn) {
             e.preventDefault();
-            showPanel(slide, cancelBtn.getAttribute('data-panel'));
+            showOrLoadPanel(slide, cancelBtn.getAttribute('data-panel'));
             return;
         }
 

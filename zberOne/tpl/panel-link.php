@@ -3,7 +3,7 @@
 {if $panel['head'] != ''}
 <h3 class="zber-one-panel-title">
     {zberOneTab_E($panel['head'])}
-    {if $panel['formPanel'] != ''}<a class="zber-one-op" href="#" data-zber-edit data-panel="{$panel['formPanel']}">编辑</a>{/if}
+    {if $panel['formPanel'] != ''}<a class="zber-one-op" href="#" data-zber-edit data-panel="{$panel['formPanel']}" data-zber-idx="{$panel['editIdx']}">编辑</a>{/if}
     {if $panel['delUrl'] != ''}<a class="zber-one-op" href="{zberOneTab_E($panel['delUrl'])}" data-zber-del data-type="{$panel['type']}" data-idx="{$panel['idx']}">删除</a>{/if}
 </h3>
 {/if}
