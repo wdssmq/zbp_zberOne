@@ -351,6 +351,7 @@ function zberOne_GetTabOneList($kind, $type)
  *                                          模板据此往元素上打 data-zber-idx，前端靠它判断态对不对
  *   formPanel                         信息组的「编辑」入口（信息没有子项，编辑入口挂在组面板上）
  *   rows                              信息组：字段行（无数据时为空数组，模板回落到 empty）
+ *   colHead                           其余组：子项表格首列的表头文字（说说列的是正文摘要，其余列标题）
  *   items                             其余组：子项列表，每项 title + value + idx + delUrl + formPanel + editIdx
  *   addUrl                            其余组：组面板顶部「添加」链接（指向表单面板的新增态）
  *   empty                             该组无数据时的提示
@@ -381,6 +382,7 @@ function zberOne_GetTabOneGroupPanel($kind, $type)
         'head' => $slot['label'] . zberOne_TypeLabel($type),
         'formPanel' => '',
         'rows' => [],
+        'colHead' => '',
         'items' => [],
         'addUrl' => '',
         'empty' => '',
@@ -406,8 +408,9 @@ function zberOne_GetTabOneGroupPanel($kind, $type)
         return $panel;
     }
 
-    // 其余组：组面板列出该组全部子项
+    // 其余组：组面板把该组全部子项列成表格
     $panel['tpl'] = 'plugin_zberOne_panel-group';
+    $panel['colHead'] = (zberOne_base::TYPE_TOOT === $type) ? '内容' : '标题';
     foreach (zberOne_GetTabOneList($kind, $type) as $i => $item) {
         $panel['items'][] = [
             'title' => (zberOne_base::TYPE_TOOT === $type) ? zberOneTab_TootTitle($item) : zberOneTab_EntryTitle($item),
