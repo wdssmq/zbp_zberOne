@@ -85,6 +85,16 @@ if (!class_exists('zberOne_base')) {
         private $cache = [];
 
         /**
+         * 发布到 pub-data/ 时写入的部署地址（url 字段）。
+         *
+         * 由调用方在写入「我」的数据前注入（如后台 ajax 处的站点地址）；
+         * 缺省为空串，仅在发布 one 时作为 url 字段带出。
+         *
+         * @var string
+         */
+        private $pubUrl = '';
+
+        /**
          * 构造函数。
          *
          * @param string $kind 数据来源：KIND_ME（默认）/ KIND_OTHER，无效值回落到 KIND_ME
@@ -303,6 +313,20 @@ if (!class_exists('zberOne_base')) {
             }
 
             return $ok;
+        }
+
+        /**
+         * 设置发布到 pub-data/ 时使用的部署地址（url 字段）。
+         *
+         * @param string $url 当前部署地址（如站点 host）
+         *
+         * @return static
+         */
+        public function SetPubUrl($url)
+        {
+            $this->pubUrl = (string) $url;
+
+            return $this;
         }
 
         /**
@@ -723,6 +747,73 @@ if (!class_exists('zberOne_base')) {
             }
 
             return true;
+        }
+
+        /**
+         * pub-data/ 下的发布文件名（`<id>.json`），非法 id 返回空串。
+         *
+         * id 仅取最后一段路径（basename）以杜绝目录穿越；纯点号视为非法。
+         *
+         * @param string $id
+         *
+         * @return string
+         */
+        private function pubFileName($id)
+        {
+            $safe = basename((string) $id);
+            if ('' === $safe || '.' === $safe || '..' === $safe) {
+                return '';
+            }
+
+            return $safe . '.json';
+        }
+
+        /**
+         * 写入后同步 one 到 pub-data/：生成 `<id>.json`（含 url），id 缺失则不生成。
+         *
+         * 仅对「我」生效；id 由旧值变为不同非空值时先清理旧文件。
+         *
+         * @param string $oldId 写入前的 one.id（用于清理旧发布文件）
+         */
+        /**
+         * 发布 one 到 pub-data/：生成 `<id>.json`（整合全部 usr-data + url），id 缺失则不生成。
+         *
+         * 在 SaveOne 写入成功后由调用方触发；$oldId 为写入前的 one.id，用于 id 变更时清理旧文件。
+         * 仅对「我」生效；id 缺失时不生成（不管旧文件）。
+         */
+        public function PublishOne()
+        {
+            if (self::KIND_ME !== $this->kind) {
+                return;
+            }
+
+            $one = $this->One();
+            $newId = isset($one['id']) ? (string) $one['id'] : '';
+            $pubDir = dirname($this->dataDir) . '/pub-data';
+
+            // id 缺失：不生成
+            if ('' === $newId) {
+                return;
+            }
+
+            $file = $this->pubFileName($newId);
+            if ('' === $file) {
+                return;
+            }
+            if (!is_dir($pubDir) && !@mkdir($pubDir, 0755, true) && !is_dir($pubDir)) {
+                return;
+            }
+
+            // 整合 usr-data/ 内全部数据：info（one 单对象）+ 各列表 + 部署地址 url
+            $pub = [
+                'info' => $this->One(),
+                'toot' => $this->Toots(),
+                'post' => $this->Posts(),
+                'video' => $this->Videos(),
+                'git' => $this->Gits(),
+                'url' => $this->pubUrl,
+            ];
+            $this->writeJson($pubDir . '/' . $file, $pub);
         }
     }
 }
