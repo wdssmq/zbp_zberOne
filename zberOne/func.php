@@ -522,7 +522,7 @@ function zberOne_GetTabOneForm($kind, $type, $idx = null)
  * 这里只给出 formPanel（表单面板 id）与 editIdx（该条序号）供前端切到编辑态。
  *
  * 面板字段：id / type / tpl / active / head / idx / editIdx / formPanel / delUrl，
- *   说说另有 text + meta，文章 / 视频另有 url。
+ *   说说另有 text + meta，文章 / 视频另有 url + meta（发布时间，缺失显示 —）。
  *   editIdx 给「编辑」入口用（换成编辑态时带的序号）；formIdx 恒为 null ——
  *   展示面板不代表编辑态，别让前端把它当成「已经是编辑某条的态」。
  *
@@ -567,7 +567,9 @@ function zberOne_GetTabOneItemPanel($kind, $type, $idx)
         $panel['text'] = isset($item['text']) ? (string) $item['text'] : '';
         $panel['meta'] = '发布时间：' . ('' !== $createdAt ? $createdAt : '—');
     } else {
+        $createdAt = isset($item['created_at']) ? trim((string) $item['created_at']) : '';
         $panel['url'] = isset($item['url']) ? trim((string) $item['url']) : '';
+        $panel['meta'] = '发布时间：' . ('' !== $createdAt ? $createdAt : '—');
     }
 
     return $panel;
