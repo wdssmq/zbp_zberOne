@@ -41,6 +41,117 @@ function zberOneTab_E($str)
 }
 
 /**
+ * 「他人」数据装载：从 hub-data/hub-NN.json 两层随机选站，拉取其远程发布数据注入 other.
+ *
+ * hub-data/ 下按两位数字分页（hub-01.json、hub-02.json…），每项 {id, name, description, url}：
+ * 先随机选一个文件，再在该文件内容里随机选一项，按 url + 站内插件发布路径拼出
+ * 远程 pub-data/<id>.json 地址（PublishOne 的产出），拉取解析后注入 zberOne_base 的
+ * 静态 other 槽，请求内所有 new zberOne_base(other) 的取数点随之生效。
+ *
+ * 拉取结果落盘静态缓存（other-cache/<id>.json，含写入时间戳），过期时间由
+ * $zbp->Config('zberOne')->cache_ttl 控制（单位小时，当前写死 24）；缓存命中时
+ * 直接注入不再发请求。结果在函数内 static 缓存，整个请求只装载一次。
+ * 任一步失败（无文件 / JSON 非法 / id 或 url 缺失 / 拉取失败）返回 null，调用处回落空态。
+ *
+ * @return null|array 选中的 hub 项（含 id / name 等）；失败为 null
+ */
+function zberOne_LoadHubOther()
+{
+    static $hit = null;
+    static $loaded = false;
+    if ($loaded) {
+        return $hit;
+    }
+    $loaded = true;
+
+    // 两层随机之第一层：随机选一个分页文件
+    $files = glob(__DIR__ . '/hub-data/hub-??.json');
+    if (!is_array($files) || 0 === count($files)) {
+        return null;
+    }
+    $file = $files[mt_rand(0, count($files) - 1)];
+
+    $json = json_decode((string) @file_get_contents($file), true);
+    if (!is_array($json) || 0 === count($json)) {
+        return null;
+    }
+
+    // 两层随机之第二层：文件内容里随机选一项
+    $item = $json[mt_rand(0, count($json) - 1)];
+    if (!is_array($item)) {
+        return null;
+    }
+    $id = isset($item['id']) ? basename(trim((string) $item['id'])) : '';
+    $url = isset($item['url']) ? trim((string) $item['url']) : '';
+    if ('' === $id || preg_match('/^\.+$/', $id) || '' === $url || 0 !== strpos($url, 'http')) {
+        return null;
+    }
+
+    // 静态文件缓存命中且未过期 → 直接注入
+    // 缓存结构：{lstTime: 写入时间戳, pub: 远程发布 JSON 原文解析结果}
+    $cacheDir = __DIR__ . '/other-cache';
+    $cacheFile = $cacheDir . '/' . $id . '.json';
+    global $zbp;
+    $ttl = 24 * 3600;
+    if ($zbp->HasConfig('zberOne') && $zbp->Config('zberOne')->HasKey('cache_ttl')) {
+        $ttl = max(0, (int) $zbp->Config('zberOne')->cache_ttl) * 3600;
+    }
+    $cache = null;
+    if (is_readable($cacheFile)) {
+        $tmp = json_decode((string) @file_get_contents($cacheFile), true);
+        if (is_array($tmp) && isset($tmp['lstTime'], $tmp['pub']) && is_array($tmp['pub'])
+            && (time() - (int) $tmp['lstTime']) < $ttl) {
+            $cache = $tmp;
+        }
+    }
+    if (null !== $cache) {
+        zberOne_base::SetOtherData($cache['pub']);
+        $hit = $item;
+
+        return $item;
+    }
+
+    // 远程发布文件地址：站点根 + 插件发布路径 + <id>.json
+    $pubUrl = rtrim($url, '/') . '/zb_users/plugin/zberOne/pub-data/' . rawurlencode($id) . '.json';
+
+    $body = '';
+    $http = null;
+    if (class_exists('Network')) {
+        $http = Network::Create();
+        $http->open('GET', $pubUrl);
+        $http->send();
+        if (200 == $http->status) {
+            $body = (string) $http->responseText;
+        }
+    }
+    if ('' === $body && ini_get('allow_url_fopen')) {
+        $ctx = stream_context_create(['http' => ['timeout' => 3]]);
+        $body = (string) @file_get_contents($pubUrl, false, $ctx);
+    }
+    if ('' === $body) {
+        return null;
+    }
+
+    $pub = json_decode($body, true);
+    if (!is_array($pub) || !isset($pub['info']) || !is_array($pub['info'])) {
+        return null;
+    }
+    zberOne_base::SetOtherData($pub);
+
+    // 落盘静态缓存（失败不影响本次注入）
+    $hit = $item;
+    if (!is_dir($cacheDir) && !@mkdir($cacheDir, 0755, true) && !is_dir($cacheDir)) {
+        return $item;
+    }
+    $json = json_encode(['lstTime' => time(), 'pub' => $pub], JSON_UNESCAPED_UNICODE);
+    if (false !== $json) {
+        @file_put_contents($cacheFile, $json . "\n");
+    }
+
+    return $item;
+}
+
+/**
  * 说说条目的菜单标题：取 text 前 24 字.
  *
  * @param array $toot
@@ -79,18 +190,26 @@ function zberOneTab_EntryTitle($item)
  *
  * 数组结构：
  *   kind   父级来源（me / other），对应 zberOne_base::KIND_*
- *   id     来源标识：me 固定为空（数据在 usr-data/one.json）；other 暂固定为 any，
- *          将来由它从外部读取具体数据
- *   name   该来源的显示名（滑动切换区域用）
+ *   id     来源标识：me 固定为空（数据在 usr-data/one.json）；other 为 hub 随机选中
+ *          站点的 id（装载失败时为 any）
+ *   name   该来源的显示名（滑动切换区域用），other 取 hub 项的 name
  *   label  该来源下四个主项目的标题前缀
  *
  * @return array
  */
 function zberOne_GetTabOneSlots()
 {
+    // other 的数据按需装载：随机选 hub 站点并拉取其发布数据（请求内只拉一次）
+    $hub = zberOne_LoadHubOther();
+
     return [
         ['kind' => zberOne_base::KIND_ME, 'id' => '', 'name' => '我', 'label' => '我的'],
-        ['kind' => zberOne_base::KIND_OTHER, 'id' => 'any', 'name' => '他人', 'label' => '他人的'],
+        [
+            'kind' => zberOne_base::KIND_OTHER,
+            'id' => (null !== $hub && isset($hub['id'])) ? (string) $hub['id'] : 'any',
+            'name' => (null !== $hub && isset($hub['name']) && '' !== trim((string) $hub['name'])) ? (string) $hub['name'] : '他人',
+            'label' => '他人的',
+        ],
     ];
 }
 
@@ -410,7 +529,7 @@ function zberOne_GetTabOneGroupPanel($kind, $type)
         $panel['formPanel'] = $canWrite ? zberOne_PanelId($kind, $type, 'form') : '';
         $panel['empty'] = $canWrite
             ? '暂无数据（' . basename($data->Dir()) . '/one.json）'
-            : '暂无数据（' . $slot['name'] . ' id：' . $slot['id'] . '，将来由 id 从外部获取）';
+            : '暂无数据（hub 随机站点拉取失败，稍后重试）';
 
         return $panel;
     }
