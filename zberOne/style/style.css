@@ -225,6 +225,50 @@
     color: #999;
 }
 
+/* 「发布版」JSON 视图：点「发布版」时接替 dl 显示的代码块 */
+#zber-one-root .zber-one-json {
+    position: relative;
+    margin: 6px 0 0;
+    padding: 6px 10px;
+    background: #f5f5f5;
+    border: 1px solid #e0e0e0;
+    border-radius: 3px;
+    font-family: Consolas, Monaco, "Courier New", monospace;
+    font-size: 12px;
+    color: #333;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+
+/* JSON 视图右上角的「复制」按钮 */
+#zber-one-root .zber-one-json-copy {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    padding: 2px 8px;
+    font-size: 12px;
+    line-height: 1.5;
+    background: #fff;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    color: #555;
+    cursor: pointer;
+}
+
+#zber-one-root .zber-one-json-copy:hover {
+    background: #f0f0f0;
+}
+
+/* 复制成功 / 失败的瞬时反馈 */
+#zber-one-root .zber-one-json-copy.is-done {
+    color: #2a9d49;
+    border-color: #2a9d49;
+}
+
+#zber-one-root .zber-one-json-copy.is-done:not(:hover) {
+    background: #f3faf4;
+}
+
 #zber-one-root .zber-one-meta {
     color: #888;
     font-size: 12px;

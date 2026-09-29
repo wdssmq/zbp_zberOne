@@ -3,13 +3,13 @@
 <div class="zber-one-box">
     <h3 class="zber-one-panel-title">
         {zberOneTab_E($panel['head'])}
-        {if $panel['formPanel'] != ''}<a class="zber-one-op" href="#" data-zber-edit data-panel="{$panel['formPanel']}">编辑</a>{/if}
+        {if $panel['formPanel'] != ''}<a class="zber-one-op" href="javascript:;" data-zber-edit data-panel="{$panel['formPanel']}">编辑</a><a class="zber-one-op" href="javascript:;" data-zber-json>JSON 查看</a>{/if}
     </h3>
     {if count($panel['rows']) > 0}
     <dl>
         {foreach $panel['rows'] as $row}
         <dt>{zberOneTab_E($row['label'])}</dt>
-        <dd>{zberOneTab_E($row['value'])}</dd>
+        <dd class="zber-one-dd-{$row['key']}">{zberOneTab_E($row['value'])}</dd>
         {/foreach}
     </dl>
     {else}

@@ -298,6 +298,86 @@
         showOrLoadPanel(slide, panelId, Number.isInteger(idx) ? idx : null);
     }
 
+    // 复制文本到剪贴板：优先 Clipboard API，不可用或失败时直接判定失败
+    function copyText(text, done) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(function () {
+                done(true);
+            }, function () {
+                done(false);
+            });
+        } else {
+            done(false);
+        }
+    }
+
+    // 点击 JSON 视图里的「复制」：源文本存在 pre 的 data-zber-json-text 上
+    // （不能用 data-zber-json，会命中「JSON 查看」按钮的 [data-zber-json] 选择器；textContent 混着按钮文字也不能用）
+    function onCopyJson(btn) {
+        const pre = closestOf(btn, 'pre.zber-one-json', root);
+        const text = pre ? (pre.getAttribute('data-zber-json-text') || '') : '';
+        if ('' === text) {
+            return;
+        }
+        copyText(text, function (ok) {
+            btn.textContent = ok ? '已复制' : '复制失败';
+            btn.classList.add('is-done');
+            window.setTimeout(function () {
+                btn.textContent = '复制';
+                btn.classList.remove('is-done');
+            }, 1500);
+        });
+    }
+
+    // 切换/恢复 JSON 查看
+    // 数据直接读面板里 dd 的现值（类名形如 zber-one-dd-<字段名>），
+    // url 与发布口径一致取全局 bloghost（zb_system 注入）
+    function onJsonToggle(el, slide) {
+        const box = closestOf(el, '.zber-one-box', slide);
+        if (!box) {
+            return;
+        }
+        const dl = box.querySelector('dl');
+        if (!dl) {
+            return;
+        }
+        let pre = box.querySelector('pre.zber-one-json');
+        if (!pre) {
+            const data = {
+                id: '',
+                name: '',
+                description: '',
+                url: ('undefined' !== typeof window.bloghost) ? window.bloghost : '',
+            };
+            const nodes = dl.querySelectorAll('dd');
+            for (let i = 0; i < nodes.length; i++) {
+                const m = /(?:^|\s)zber-one-dd-([\w-]+)/.exec(nodes[i].className || '');
+                if (m && Object.prototype.hasOwnProperty.call(data, m[1])) {
+                    data[m[1]] = nodes[i].textContent.trim();
+                }
+            }
+            pre = document.createElement('pre');
+            pre.className = 'zber-one-json';
+            pre.setAttribute('data-zber-json-text', JSON.stringify(data, null, 4));
+            pre.textContent = pre.getAttribute('data-zber-json-text');
+            const copyBtn = document.createElement('button');
+            copyBtn.type = 'button';
+            copyBtn.className = 'zber-one-json-copy';
+            copyBtn.textContent = '复制';
+            pre.appendChild(copyBtn);
+            dl.insertAdjacentElement('afterend', pre);
+        }
+        if (dl.hasAttribute('hidden')) {
+            dl.removeAttribute('hidden');
+            pre.setAttribute('hidden', '');
+            el.textContent = 'JSON 查看';
+        } else {
+            dl.setAttribute('hidden', '');
+            pre.removeAttribute('hidden');
+            el.textContent = '恢复';
+        }
+    }
+
     root.addEventListener('click', function (e) {
         const slide = closestOf(e.target, '.zber-one-slide', root);
         if (!slide) {
@@ -336,6 +416,18 @@
         if (cancelBtn) {
             e.preventDefault();
             showOrLoadPanel(slide, cancelBtn.getAttribute('data-panel'));
+            return;
+        }
+        const jsonLink = closestOf(e.target, '[data-zber-json]', slide);
+        if (jsonLink) {
+            e.preventDefault();
+            onJsonToggle(jsonLink, slide);
+            return;
+        }
+        const copyBtn = closestOf(e.target, '.zber-one-json-copy', slide);
+        if (copyBtn) {
+            e.preventDefault();
+            onCopyJson(copyBtn);
             return;
         }
 
