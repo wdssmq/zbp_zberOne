@@ -662,6 +662,54 @@ if (!class_exists('zberOne_base')) {
         }
 
         /**
+         * 写入后同步 one 到 pub-data/：生成 `<id>.json`（含 url），id 缺失则不生成。
+         *
+         * 仅对「我」生效；id 由旧值变为不同非空值时先清理旧文件。
+         *
+         * @param string $oldId 写入前的 one.id（用于清理旧发布文件）
+         */
+        /**
+         * 发布 one 到 pub-data/：生成 `<id>.json`（整合全部 usr-data + url），id 缺失则不生成。
+         *
+         * 在 SaveOne 写入成功后由调用方触发；$oldId 为写入前的 one.id，用于 id 变更时清理旧文件。
+         * 仅对「我」生效；id 缺失时不生成（不管旧文件）。
+         */
+        public function PublishOne()
+        {
+            if (self::KIND_ME !== $this->kind) {
+                return;
+            }
+
+            $one = $this->One();
+            $newId = isset($one['id']) ? (string) $one['id'] : '';
+            $pubDir = dirname($this->dataDir) . '/pub-data';
+
+            // id 缺失：不生成
+            if ('' === $newId) {
+                return;
+            }
+
+            $file = $this->pubFileName($newId);
+            if ('' === $file) {
+                return;
+            }
+            if (!is_dir($pubDir) && !@mkdir($pubDir, 0755, true) && !is_dir($pubDir)) {
+                return;
+            }
+
+            // 整合 usr-data/ 内全部数据：info（one 单对象）+ 各列表 + 部署地址 url
+            $pub = [
+                'info' => $this->One(),
+                'toot' => $this->Toots(),
+                'post' => $this->Posts(),
+                'video' => $this->Videos(),
+                'git' => $this->Gits(),
+                'url' => $this->pubUrl,
+            ];
+            $this->writeJson($pubDir . '/' . $file, $pub);
+        }
+
+        /**
          * 指定类型允许的字段名列表（输出顺序即持久化顺序）。
          *
          * @param string $type
@@ -766,54 +814,6 @@ if (!class_exists('zberOne_base')) {
             }
 
             return $safe . '.json';
-        }
-
-        /**
-         * 写入后同步 one 到 pub-data/：生成 `<id>.json`（含 url），id 缺失则不生成。
-         *
-         * 仅对「我」生效；id 由旧值变为不同非空值时先清理旧文件。
-         *
-         * @param string $oldId 写入前的 one.id（用于清理旧发布文件）
-         */
-        /**
-         * 发布 one 到 pub-data/：生成 `<id>.json`（整合全部 usr-data + url），id 缺失则不生成。
-         *
-         * 在 SaveOne 写入成功后由调用方触发；$oldId 为写入前的 one.id，用于 id 变更时清理旧文件。
-         * 仅对「我」生效；id 缺失时不生成（不管旧文件）。
-         */
-        public function PublishOne()
-        {
-            if (self::KIND_ME !== $this->kind) {
-                return;
-            }
-
-            $one = $this->One();
-            $newId = isset($one['id']) ? (string) $one['id'] : '';
-            $pubDir = dirname($this->dataDir) . '/pub-data';
-
-            // id 缺失：不生成
-            if ('' === $newId) {
-                return;
-            }
-
-            $file = $this->pubFileName($newId);
-            if ('' === $file) {
-                return;
-            }
-            if (!is_dir($pubDir) && !@mkdir($pubDir, 0755, true) && !is_dir($pubDir)) {
-                return;
-            }
-
-            // 整合 usr-data/ 内全部数据：info（one 单对象）+ 各列表 + 部署地址 url
-            $pub = [
-                'info' => $this->One(),
-                'toot' => $this->Toots(),
-                'post' => $this->Posts(),
-                'video' => $this->Videos(),
-                'git' => $this->Gits(),
-                'url' => $this->pubUrl,
-            ];
-            $this->writeJson($pubDir . '/' . $file, $pub);
         }
     }
 }
