@@ -899,8 +899,8 @@ function zberOne_Ajax()
         }
     }
 
-    // one 保存成功后发布到 pub-data/（整份重发，含全部 usr-data + url）
-    if ($ok && zberOne_base::TYPE_ONE === $type) {
+    // 数据保存成功后发布到 pub-data/（整份重发，含全部 usr-data + url）
+    if ($ok) {
         $data->PublishOne();
     }
 
