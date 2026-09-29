@@ -11,4 +11,5 @@
     {if $panel['url'] != ''}
     <p>链接：<a href="{zberOneTab_E($panel['url'])}" target="_blank" rel="noopener">{zberOneTab_E($panel['url'])}</a></p>
     {/if}
+    {if $panel['meta'] != ''}<p class="zber-one-meta">{zberOneTab_E($panel['meta'])}</p>{/if}
 </div>

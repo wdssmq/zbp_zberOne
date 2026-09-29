@@ -10,8 +10,8 @@
  * 只有「我」的数据落在本地：数据目录 zberOne/usr-data/，每个子项目一个 json
  *   one.json   信息：{id, name, description}
  *   toot.json  说说：[{text, created_at}]（created_at 由写入时自动生成）
- *   post.json  文章：[{title, url}]
- *   video.json 视频：[{title, url}]
+ *   post.json  文章：[{title, url, created_at}]（created_at 由写入时自动生成）
+ *   video.json 视频：[{title, url, created_at}]（created_at 由写入时自动生成）
  *
  * 读写只接受「我」（kind = me）自己的数据；other 的数据来自外部，Load 恒空、写入一律拒绝。
  */
@@ -372,6 +372,8 @@ if (!class_exists('zberOne_base')) {
         /**
          * 追加一条「文章」。
          *
+         * 发布时间由服务端在写入时确定，不接受调用方传入。
+         *
          * @param null|array $data
          *
          * @return bool
@@ -379,13 +381,17 @@ if (!class_exists('zberOne_base')) {
         public function AddPost($data = null)
         {
             $list = $this->Posts();
-            $list[] = $this->pick(self::TYPE_POST, $data);
+            $item = $this->pick(self::TYPE_POST, $data);
+            $item['created_at'] = date('Y-m-d H:i:s');
+            $list[] = $item;
 
             return $this->SavePosts(array_values($list));
         }
 
         /**
          * 追加一条「视频」。
+         *
+         * 发布时间由服务端在写入时确定，不接受调用方传入。
          *
          * @param null|array $data
          *
@@ -394,7 +400,9 @@ if (!class_exists('zberOne_base')) {
         public function AddVideo($data = null)
         {
             $list = $this->Videos();
-            $list[] = $this->pick(self::TYPE_VIDEO, $data);
+            $item = $this->pick(self::TYPE_VIDEO, $data);
+            $item['created_at'] = date('Y-m-d H:i:s');
+            $list[] = $item;
 
             return $this->SaveVideos(array_values($list));
         }
@@ -438,6 +446,8 @@ if (!class_exists('zberOne_base')) {
         /**
          * 修改第 $idx 条「文章」。
          *
+         * 发布时间由服务端在写入时刷新，不接受调用方传入。
+         *
          * @param int        $idx  序号
          * @param null|array $data
          *
@@ -450,13 +460,17 @@ if (!class_exists('zberOne_base')) {
             if (!isset($list[$idx])) {
                 return false;
             }
-            $list[$idx] = $this->pick(self::TYPE_POST, $data);
+            $item = $this->pick(self::TYPE_POST, $data);
+            $item['created_at'] = date('Y-m-d H:i:s');
+            $list[$idx] = $item;
 
             return $this->SavePosts(array_values($list));
         }
 
         /**
          * 修改第 $idx 条「视频」。
+         *
+         * 发布时间由服务端在写入时刷新，不接受调用方传入。
          *
          * @param int        $idx  序号
          * @param null|array $data
@@ -470,7 +484,9 @@ if (!class_exists('zberOne_base')) {
             if (!isset($list[$idx])) {
                 return false;
             }
-            $list[$idx] = $this->pick(self::TYPE_VIDEO, $data);
+            $item = $this->pick(self::TYPE_VIDEO, $data);
+            $item['created_at'] = date('Y-m-d H:i:s');
+            $list[$idx] = $item;
 
             return $this->SaveVideos(array_values($list));
         }
@@ -550,7 +566,7 @@ if (!class_exists('zberOne_base')) {
 
                 case self::TYPE_POST:
                 case self::TYPE_VIDEO:
-                    return ['title', 'url'];
+                    return ['title', 'url', 'created_at'];
             }
 
             return [];
