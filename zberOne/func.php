@@ -827,6 +827,8 @@ function zberOne_CmdAjax($src)
  */
 function zberOne_Ajax()
 {
+    global $zbp;
+
     $act = (string) GetVars('op', 'GET', '');
     $kind = (string) GetVars('kind', 'GET', zberOne_base::KIND_ME);
     $type = (string) GetVars('type', 'GET', '');
@@ -836,6 +838,9 @@ function zberOne_Ajax()
     $message = '';
 
     $data = new zberOne_base($kind);
+    // 发布到 pub-data/ 的部署地址（url 字段）取当前站点地址
+    $data->SetPubUrl(isset($zbp->host) ? $zbp->host : '');
+
     if (zberOne_base::KIND_ME !== $data->Kind()) {
         $message = '只允许编辑「我」的数据';
     } elseif (!in_array($type, zberOne_base::Types(), true)) {
@@ -892,6 +897,11 @@ function zberOne_Ajax()
         } else {
             $message = '未知的操作';
         }
+    }
+
+    // one 保存成功后发布到 pub-data/（整份重发，含全部 usr-data + url）
+    if ($ok && zberOne_base::TYPE_ONE === $type) {
+        $data->PublishOne();
     }
 
     $parts = zberOne_RenderTabOneParts($kind);
