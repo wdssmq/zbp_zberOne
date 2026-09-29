@@ -697,14 +697,15 @@ if (!class_exists('zberOne_base')) {
                 return;
             }
 
-            // 整合 usr-data/ 内全部数据：info（one 单对象）+ 各列表 + 部署地址 url
+            // 整合 usr-data/ 内全部数据：info（one 单对象，附部署地址 url）+ 各列表
+            $info = $this->One();
+            $info['url'] = $this->pubUrl;
             $pub = [
-                'info' => $this->One(),
+                'info' => $info,
                 'toot' => $this->Toots(),
                 'post' => $this->Posts(),
                 'video' => $this->Videos(),
                 'git' => $this->Gits(),
-                'url' => $this->pubUrl,
             ];
             $this->writeJson($pubDir . '/' . $file, $pub);
         }
