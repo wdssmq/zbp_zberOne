@@ -51,6 +51,10 @@ require $blogpath . 'zb_system/admin/admin_top.php';
                 </div>
             </div>
         </div>
+        <div id="zber-one-footer">
+            <p>提交站点请点下边页面：</p>
+            <p><a href="https://github.com/wdssmq/zbp_zberOne/issues" target="_blank" title="Issues · wdssmq/zbp_zberOne">https://github.com/wdssmq/zbp_zberOne/issues</a></p>
+        </div>
     </div>
 </div>
 

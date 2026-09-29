@@ -6,83 +6,83 @@
    滑动只改 track 的 transform（不触发布局），容器 overflow: hidden，
    因此不会向外溢出、也不会改变 #divMain2 及外层的高度与宽度 */
 #zber-one-root {
-    --zber-one-peek: 56px;
-    position: relative;
-    overflow: hidden;
-    margin-top: 10px;
+  --zber-one-peek: 56px;
+  position: relative;
+  overflow: hidden;
+  margin-top: 10px;
 }
 
 #zber-one-root .zber-one-pager {
-    width: calc(100% - var(--zber-one-peek));
+  width: calc(100% - var(--zber-one-peek));
 }
 
 #zber-one-root .zber-one-track {
-    display: flex;
-    transition: transform .35s ease;
+  display: flex;
+  transition: transform .35s ease;
 }
 
 #zber-one-root .zber-one-slide {
-    box-sizing: border-box;
-    flex: 0 0 100%;
-    min-width: 0;
-    padding-right: 14px;
-    transition: opacity .35s ease;
+  box-sizing: border-box;
+  flex: 0 0 100%;
+  min-width: 0;
+  padding-right: 14px;
+  transition: opacity .35s ease;
 }
 
 /* 在激活项右侧的来源：向右渐隐 */
 #zber-one-root .zber-one-slide.is-after {
-    opacity: .5;
-    -webkit-mask-image: linear-gradient(to right, rgba(0, 0, 0, .85) 0, rgba(0, 0, 0, 0) 64px);
-    mask-image: linear-gradient(to right, rgba(0, 0, 0, .85) 0, rgba(0, 0, 0, 0) 64px);
+  opacity: .5;
+  -webkit-mask-image: linear-gradient(to right, rgba(0, 0, 0, .85) 0, rgba(0, 0, 0, 0) 64px);
+  mask-image: linear-gradient(to right, rgba(0, 0, 0, .85) 0, rgba(0, 0, 0, 0) 64px);
 }
 
 /* 在激活项左侧的来源：向左渐隐 */
 #zber-one-root .zber-one-slide.is-before {
-    opacity: .5;
-    -webkit-mask-image: linear-gradient(to left, rgba(0, 0, 0, .85) 0, rgba(0, 0, 0, 0) 64px);
-    mask-image: linear-gradient(to left, rgba(0, 0, 0, .85) 0, rgba(0, 0, 0, 0) 64px);
+  opacity: .5;
+  -webkit-mask-image: linear-gradient(to left, rgba(0, 0, 0, .85) 0, rgba(0, 0, 0, 0) 64px);
+  mask-image: linear-gradient(to left, rgba(0, 0, 0, .85) 0, rgba(0, 0, 0, 0) 64px);
 }
 
 #zber-one-root .zber-one-head {
-    padding: 0 0 8px 2px;
-    font-size: 14px;
-    color: #333;
+  padding: 0 0 8px 2px;
+  font-size: 14px;
+  color: #333;
 }
 
 #zber-one-root .is-before .zber-one-head {
-    display: flex;
-    justify-content: flex-end;
+  display: flex;
+  justify-content: flex-end;
 }
 
 #zber-one-root .zber-one-head .zber-one-name {
-    font-weight: 600;
-    cursor: pointer;
+  font-weight: 600;
+  cursor: pointer;
 }
 
 #zber-one-root .zber-one-head .zber-one-sid {
-    margin-left: 6px;
-    color: #999;
-    font-size: 12px;
+  margin-left: 6px;
+  color: #999;
+  font-size: 12px;
 }
 
 #zber-one-root .zber-one-body {
-    display: flex;
-    align-items: flex-start;
-    gap: 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
 }
 
 #zber-one-root .zber-one-side {
-    flex: 0 0 220px;
-    width: 220px;
-    background: #fff;
-    border: 1px solid #d8d8d8;
-    border-radius: 4px;
-    padding: 6px 0;
+  flex: 0 0 220px;
+  width: 220px;
+  background: #fff;
+  border: 1px solid #d8d8d8;
+  border-radius: 4px;
+  padding: 6px 0;
 }
 
 #zber-one-root .zber-one-main {
-    flex: 1 1 auto;
-    min-width: 0;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 /* 左栏：LuLu UI <ui-tab> 手风琴（name 相同的组互斥展开，同时只开一个）
@@ -91,216 +91,223 @@
 #zber-one-root .zber-one-side dl,
 #zber-one-root .zber-one-side dt,
 #zber-one-root .zber-one-side dd {
-    margin: 0;
+  margin: 0;
 }
 
 #zber-one-root .zber-one-side ui-tab {
-    display: block;
-    padding: 6px 12px;
-    cursor: pointer;
-    font-weight: 600;
-    color: #333;
-    user-select: none;
+  display: block;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-weight: 600;
+  color: #333;
+  user-select: none;
 }
 
 /* 展开指示符（补回 <details> 原生三角的提示作用） */
 #zber-one-root .zber-one-side ui-tab::before {
-    content: '▸';
-    display: inline-block;
-    width: 14px;
-    color: #999;
-    transition: transform .2s ease;
+  content: '▸';
+  display: inline-block;
+  width: 14px;
+  color: #999;
+  transition: transform .2s ease;
 }
 
 #zber-one-root .zber-one-side dt.active ui-tab::before {
-    transform: rotate(90deg);
+  transform: rotate(90deg);
 }
 
 #zber-one-root .zber-one-side ui-tab:hover {
-    background: #f2f6fc;
+  background: #f2f6fc;
 }
 
 /* 内容行：0fr 收起、1fr 展开；子项容器负责裁剪 */
 #zber-one-root .zber-one-side dd {
-    display: grid;
-    grid-template-rows: 0fr;
-    transition: grid-template-rows .25s ease;
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows .25s ease;
 }
 
-#zber-one-root .zber-one-side dt.active + dd {
-    grid-template-rows: 1fr;
+#zber-one-root .zber-one-side dt.active+dd {
+  grid-template-rows: 1fr;
 }
 
-#zber-one-root .zber-one-side dd > .zber-one-items {
-    min-height: 0;
-    overflow: hidden;
+#zber-one-root .zber-one-side dd>.zber-one-items {
+  min-height: 0;
+  overflow: hidden;
 }
 
 #zber-one-root .zber-one-item {
-    padding: 5px 12px 5px 30px;
-    cursor: pointer;
-    color: #444;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+  padding: 5px 12px 5px 30px;
+  cursor: pointer;
+  color: #444;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 #zber-one-root .zber-one-item:hover {
-    background: #f2f6fc;
+  background: #f2f6fc;
 }
 
 #zber-one-root .zber-one-item.active {
-    background: #e3edfd;
-    color: #1a66b3;
+  background: #e3edfd;
+  color: #1a66b3;
 }
 
 #zber-one-root .zber-one-item-empty {
-    color: #999;
-    cursor: default;
+  color: #999;
+  cursor: default;
 }
 
 /* 面板外层只管显隐：边框、留白等外观交给内容模板里的 .zber-one-box */
 #zber-one-root .zber-one-panel {
-    display: none;
+  display: none;
 }
 
 #zber-one-root .zber-one-panel.active {
-    display: block;
+  display: block;
 }
 
 /* 面板内容的「框」（标题 + 正文 / 表单 / 空态） */
 #zber-one-root .zber-one-box {
-    background: #fff;
-    border: 1px solid #d8d8d8;
-    border-radius: 4px;
-    padding: 14px 18px;
+  background: #fff;
+  border: 1px solid #d8d8d8;
+  border-radius: 4px;
+  padding: 14px 18px;
 }
 
 /* 标题是框内最后一个元素时（组面板有数据，表格在框外）不留底距，框贴着标题 */
-#zber-one-root .zber-one-box > h3:last-child {
-    margin-bottom: 0;
+#zber-one-root .zber-one-box>h3:last-child {
+  margin-bottom: 0;
 }
 
 /* 框外的表格（组面板）：与框留出与标题一致的间距 */
-#zber-one-root .zber-one-box + .ui-table {
-    margin-top: 10px;
+#zber-one-root .zber-one-box+.ui-table {
+  margin-top: 10px;
 }
 
 /* 展开的组标题高亮：它同时代表右栏当前内容 */
-#zber-one-root .zber-one-side dt.active > ui-tab {
-    background: #e3edfd;
-    color: #1a66b3;
+#zber-one-root .zber-one-side dt.active>ui-tab {
+  background: #e3edfd;
+  color: #1a66b3;
 }
 
 #zber-one-root .zber-one-panel h3 {
-    margin: 0 0 10px;
-    font-size: 15px;
+  margin: 0 0 10px;
+  font-size: 15px;
 }
 
 /* 组面板的子项列表：LuLu 表格 */
 #zber-one-root .ui-table td {
-    word-break: break-all;
+  word-break: break-all;
 }
 
 /* 单元格里的「编辑 / 删除」并排，首个不留左缩进（.zber-one-op 默认是跟在标题后面的） */
 #zber-one-root .ui-table .zber-one-op:first-child {
-    margin-left: 0;
+  margin-left: 0;
 }
 
 #zber-one-root dl {
-    margin: 0;
+  margin: 0;
 }
 
 #zber-one-root dt {
-    font-weight: 600;
-    margin-top: 8px;
+  font-weight: 600;
+  margin-top: 8px;
 }
 
 #zber-one-root dd {
-    margin: 2px 0 0;
-    word-break: break-all;
+  margin: 2px 0 0;
+  word-break: break-all;
 }
 
 #zber-one-root .zber-one-empty {
-    color: #999;
+  color: #999;
 }
 
 /* 「发布版」JSON 视图：点「发布版」时接替 dl 显示的代码块 */
 #zber-one-root .zber-one-json {
-    position: relative;
-    margin: 6px 0 0;
-    padding: 6px 10px;
-    background: #f5f5f5;
-    border: 1px solid #e0e0e0;
-    border-radius: 3px;
-    font-family: Consolas, Monaco, "Courier New", monospace;
-    font-size: 12px;
-    color: #333;
-    white-space: pre-wrap;
-    word-break: break-all;
+  position: relative;
+  margin: 6px 0 0;
+  padding: 6px 10px;
+  background: #f5f5f5;
+  border: 1px solid #e0e0e0;
+  border-radius: 3px;
+  font-family: Consolas, Monaco, "Courier New", monospace;
+  font-size: 12px;
+  color: #333;
+  white-space: pre-wrap;
+  word-break: break-all;
 }
 
 /* JSON 视图右上角的「复制」按钮 */
 #zber-one-root .zber-one-json-copy {
-    position: absolute;
-    top: 4px;
-    right: 4px;
-    padding: 2px 8px;
-    font-size: 12px;
-    line-height: 1.5;
-    background: #fff;
-    border: 1px solid #ccc;
-    border-radius: 3px;
-    color: #555;
-    cursor: pointer;
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  padding: 2px 8px;
+  font-size: 12px;
+  line-height: 1.5;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  color: #555;
+  cursor: pointer;
 }
 
 #zber-one-root .zber-one-json-copy:hover {
-    background: #f0f0f0;
+  background: #f0f0f0;
 }
 
 /* 复制成功 / 失败的瞬时反馈 */
 #zber-one-root .zber-one-json-copy.is-done {
-    color: #2a9d49;
-    border-color: #2a9d49;
+  color: #2a9d49;
+  border-color: #2a9d49;
 }
 
 #zber-one-root .zber-one-json-copy.is-done:not(:hover) {
-    background: #f3faf4;
+  background: #f3faf4;
 }
 
 #zber-one-root .zber-one-meta {
-    color: #888;
-    font-size: 12px;
-    margin-top: 10px;
+  color: #888;
+  font-size: 12px;
+  margin-top: 10px;
 }
 
 /* 操作入口：面板标题旁的「添加 / 编辑 / 删除」 */
 #zber-one-root .zber-one-op {
-    margin-left: 10px;
-    font-size: 12px;
-    font-weight: 400;
-    color: #1a66b3;
-    text-decoration: none;
-    cursor: pointer;
+  margin-left: 10px;
+  font-size: 12px;
+  font-weight: 400;
+  color: #1a66b3;
+  text-decoration: none;
+  cursor: pointer;
 }
 
 #zber-one-root .zber-one-op:hover {
-    text-decoration: underline;
+  text-decoration: underline;
 }
 
 /* 表单面板 */
 #zber-one-root .zber-one-field-label {
-    display: block;
-    margin-bottom: 4px;
-    font-size: 13px;
+  display: block;
+  margin-bottom: 4px;
+  font-size: 13px;
 }
 
 #zber-one-root .ui-button {
-    background: var(--ui-button-color) no-repeat center;
+  background: var(--ui-button-color) no-repeat center;
 }
 
 #zber-one-root .ui-input {
-    width: 37em;
+  width: 37em;
 }
 
+#zber-one-footer {
+  margin-top: 13px;
+  background: #fff;
+  border: 1px solid #d8d8d8;
+  border-radius: 4px;
+  padding: 14px 18px;
+}
