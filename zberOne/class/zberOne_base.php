@@ -95,6 +95,16 @@ if (!class_exists('zberOne_base')) {
         private $pubUrl = '';
 
         /**
+         * 外部注入的「他人」数据（按类型，请求内有效）。
+         *
+         * 由 zberOne_LoadHubOther() 从远程发布文件拉取后经 SetOtherData() 注入；
+         * 未注入时 Load() 对 other 仍返回空数组。
+         *
+         * @var array
+         */
+        private static $otherData = [];
+
+        /**
          * 构造函数。
          *
          * @param string $kind 数据来源：KIND_ME（默认）/ KIND_OTHER，无效值回落到 KIND_ME
@@ -105,6 +115,26 @@ if (!class_exists('zberOne_base')) {
             if (in_array($kind, self::$kinds, true)) {
                 $this->kind = $kind;
             }
+        }
+
+        /**
+         * 注入「他人」数据：把远程发布 JSON（PublishOne 的产出）按类型拆存.
+         *
+         * pub 结构：{info:{...}, toot:[], post:[], video:[], git:[]}；
+         * info 拆到 one，其余列表按各自键拆存，非数组一律按空数组处理。
+         *
+         * @param array $pub 远程发布文件解析结果
+         */
+        public static function SetOtherData(array $pub)
+        {
+            $data = [
+                self::TYPE_ONE => (isset($pub['info']) && is_array($pub['info'])) ? $pub['info'] : [],
+                self::TYPE_TOOT => (isset($pub['toot']) && is_array($pub['toot'])) ? array_values($pub['toot']) : [],
+                self::TYPE_POST => (isset($pub['post']) && is_array($pub['post'])) ? array_values($pub['post']) : [],
+                self::TYPE_VIDEO => (isset($pub['video']) && is_array($pub['video'])) ? array_values($pub['video']) : [],
+                self::TYPE_GIT => (isset($pub['git']) && is_array($pub['git'])) ? array_values($pub['git']) : [],
+            ];
+            self::$otherData = $data;
         }
 
         /**
@@ -156,7 +186,8 @@ if (!class_exists('zberOne_base')) {
         /**
          * 读取指定类型的数据（带内存缓存）；文件缺失或解析失败时返回空数组。
          *
-         * 只有「我」的数据来自 usr-data；other 将来由 id 从外部获取，当前恒为空数组。
+         * 只有「我」的数据来自 usr-data；other 的数据来自外部注入（SetOtherData），
+         * 未注入时返回空数组。
          *
          * @param string $type
          *
@@ -165,7 +196,11 @@ if (!class_exists('zberOne_base')) {
         public function Load($type)
         {
             if (self::KIND_ME !== $this->kind) {
-                return [];
+                if (!in_array($type, self::$types, true)) {
+                    return [];
+                }
+
+                return array_key_exists($type, self::$otherData) ? self::$otherData[$type] : [];
             }
             if (!in_array($type, self::$types, true)) {
                 return [];
