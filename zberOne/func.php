@@ -401,9 +401,9 @@ function zberOne_GetTabOneGroupPanel($kind, $type)
         $one = $data->One();
         if (count($one) > 0) {
             $panel['rows'] = [
-                ['label' => 'ID', 'value' => isset($one['id']) ? $one['id'] : ''],
-                ['label' => '名称', 'value' => isset($one['name']) ? $one['name'] : ''],
-                ['label' => '简介', 'value' => isset($one['description']) ? $one['description'] : ''],
+                ['label' => 'ID', 'value' => isset($one['id']) ? $one['id'] : '', 'key' => 'id'],
+                ['label' => '名称', 'value' => isset($one['name']) ? $one['name'] : '', 'key' => 'name'],
+                ['label' => '简介', 'value' => isset($one['description']) ? $one['description'] : '', 'key' => 'description'],
             ];
         }
         $panel['tpl'] = 'plugin_zberOne_panel-one';
