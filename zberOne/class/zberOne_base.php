@@ -5,13 +5,14 @@
  *
  * 数据分两级：
  *   kind  父级，谁的：me（读 usr-data）/ other（将来由 id 从外部获取）
- *   type  子级，哪一项：one（信息）/ toot（说说）/ post（文章）/ video（视频）
+ *   type  子级，哪一项：one（信息）/ toot（说说）/ post（文章）/ video（视频）/ git（仓库）
  *
  * 只有「我」的数据落在本地：数据目录 zberOne/usr-data/，每个子项目一个 json
  *   one.json   信息：{id, name, description}
  *   toot.json  说说：[{text, created_at}]（created_at 由写入时自动生成）
  *   post.json  文章：[{title, url, created_at}]（created_at 由写入时自动生成）
  *   video.json 视频：[{title, url, created_at}]（created_at 由写入时自动生成）
+ *   git.json   仓库：[{title, url, created_at}]（created_at 由写入时自动生成）
  *
  * 读写只接受「我」（kind = me）自己的数据；other 的数据来自外部，Load 恒空、写入一律拒绝。
  */
@@ -36,6 +37,9 @@ if (!class_exists('zberOne_base')) {
         /** 子级项目：视频 */
         public const TYPE_VIDEO = 'video';
 
+        /** 子级项目：仓库 */
+        public const TYPE_GIT = 'git';
+
         /**
          * 允许的数据来源列表。
          *
@@ -56,6 +60,7 @@ if (!class_exists('zberOne_base')) {
             self::TYPE_TOOT,
             self::TYPE_POST,
             self::TYPE_VIDEO,
+            self::TYPE_GIT,
         ];
 
         /**
@@ -214,6 +219,16 @@ if (!class_exists('zberOne_base')) {
         }
 
         /**
+         * 仓库。
+         *
+         * @return array
+         */
+        public function Gits()
+        {
+            return $this->Load(self::TYPE_GIT);
+        }
+
+        /**
          * 清空内存缓存，使后续 Load 重新读取文件。
          *
          * @param null|string $type 指定类型；为空时清空全部
@@ -339,6 +354,18 @@ if (!class_exists('zberOne_base')) {
         }
 
         /**
+         * 整份覆盖写「仓库」。
+         *
+         * @param null|array $data
+         *
+         * @return bool
+         */
+        public function SaveGits($data = null)
+        {
+            return $this->Save(self::TYPE_GIT, $data);
+        }
+
+        /**
          * 新增/覆盖「信息」（one 是单对象，整条替换）。
          *
          * @param null|array $data
@@ -405,6 +432,25 @@ if (!class_exists('zberOne_base')) {
             $list[] = $item;
 
             return $this->SaveVideos(array_values($list));
+        }
+
+        /**
+         * 追加一条「仓库」。
+         *
+         * 发布时间由服务端在写入时确定，不接受调用方传入。
+         *
+         * @param null|array $data
+         *
+         * @return bool
+         */
+        public function AddGit($data = null)
+        {
+            $list = $this->Gits();
+            $item = $this->pick(self::TYPE_GIT, $data);
+            $item['created_at'] = date('Y-m-d H:i:s');
+            $list[] = $item;
+
+            return $this->SaveGits(array_values($list));
         }
 
         /**
@@ -492,6 +538,30 @@ if (!class_exists('zberOne_base')) {
         }
 
         /**
+         * 修改第 $idx 条「仓库」。
+         *
+         * 发布时间由服务端在写入时刷新，不接受调用方传入。
+         *
+         * @param int        $idx  序号
+         * @param null|array $data
+         *
+         * @return bool
+         */
+        public function UpdateGit($idx, $data = null)
+        {
+            $list = $this->Gits();
+            $idx = (int) $idx;
+            if (!isset($list[$idx])) {
+                return false;
+            }
+            $item = $this->pick(self::TYPE_GIT, $data);
+            $item['created_at'] = date('Y-m-d H:i:s');
+            $list[$idx] = $item;
+
+            return $this->SaveGits(array_values($list));
+        }
+
+        /**
          * 删除第 $idx 条「说说」。
          *
          * @param int $idx 序号
@@ -549,6 +619,25 @@ if (!class_exists('zberOne_base')) {
         }
 
         /**
+         * 删除第 $idx 条「仓库」。
+         *
+         * @param int $idx 序号
+         *
+         * @return bool
+         */
+        public function DeleteGit($idx)
+        {
+            $list = $this->Gits();
+            $idx = (int) $idx;
+            if (!isset($list[$idx])) {
+                return false;
+            }
+            unset($list[$idx]);
+
+            return $this->SaveGits(array_values($list));
+        }
+
+        /**
          * 指定类型允许的字段名列表（输出顺序即持久化顺序）。
          *
          * @param string $type
@@ -566,6 +655,7 @@ if (!class_exists('zberOne_base')) {
 
                 case self::TYPE_POST:
                 case self::TYPE_VIDEO:
+                case self::TYPE_GIT:
                     return ['title', 'url', 'created_at'];
             }
 
