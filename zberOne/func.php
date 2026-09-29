@@ -117,7 +117,7 @@ function zberOne_GetTabOneSlot($kind)
  *
  * 数组结构：
  *   title  菜单标题
- *   type   对应的子级项目（one / toot / post / video）
+ *   type   对应的子级项目（one / toot / post / video / git）
  *   id     该组在 DOM 中的唯一 id，即 LuLu <ui-tab> 的 target：zber-group-<kind>-<type>
  *   name   手风琴分组名，同 kind 的各组互斥展开（同时只开一个）：zber-group-<kind>
  *   panel  点该组标题时显示的组面板 id：zber-panel-<kind>-<type>
@@ -148,12 +148,14 @@ function zberOne_GetTabOneMenu($kind = zberOne_base::KIND_ME)
         ['title' => $prefix . '说说', 'type' => 'toot', 'id' => $groupName . '-toot', 'name' => $groupName, 'open' => false, 'empty' => '（暂无说说）', 'items' => []],
         ['title' => $prefix . '文章', 'type' => 'post', 'id' => $groupName . '-post', 'name' => $groupName, 'open' => false, 'empty' => '（暂无文章）', 'items' => []],
         ['title' => $prefix . '视频', 'type' => 'video', 'id' => $groupName . '-video', 'name' => $groupName, 'open' => false, 'empty' => '（暂无视频）', 'items' => []],
+        ['title' => $prefix . '仓库', 'type' => 'git', 'id' => $groupName . '-git', 'name' => $groupName, 'open' => false, 'empty' => '（暂无仓库）', 'items' => []],
     ];
 
     $listMap = [
         'toot' => $data->Toots(),
         'post' => $data->Posts(),
         'video' => $data->Videos(),
+        'git' => $data->Gits(),
     ];
 
     foreach ($menu as $i => $group) {
@@ -183,7 +185,7 @@ function zberOne_GetTabOneMenu($kind = zberOne_base::KIND_ME)
  * 非数字序号（如 'form'）用于表单等特殊面板，不与数据序号冲突。
  *
  * @param string          $kind 数据来源
- * @param string          $type 子级项目（one / toot / post / video）
+ * @param string          $type 子级项目（one / toot / post / video / git）
  * @param null|int|string $idx  子项序号；省略表示该组的组面板
  *
  * @return string
@@ -212,6 +214,7 @@ function zberOne_TypeLabel($type)
         zberOne_base::TYPE_TOOT => '说说',
         zberOne_base::TYPE_POST => '文章',
         zberOne_base::TYPE_VIDEO => '视频',
+        zberOne_base::TYPE_GIT => '仓库',
     ];
 
     return isset($labels[$type]) ? $labels[$type] : $type;
@@ -243,6 +246,7 @@ function zberOne_FormFields($type)
 
         case zberOne_base::TYPE_POST:
         case zberOne_base::TYPE_VIDEO:
+        case zberOne_base::TYPE_GIT:
             return [
                 ['name' => 'title', 'label' => '标题'],
                 ['name' => 'url', 'label' => '链接'],
@@ -333,6 +337,9 @@ function zberOne_GetTabOneList($kind, $type)
 
         case zberOne_base::TYPE_VIDEO:
             return $data->Videos();
+
+        case zberOne_base::TYPE_GIT:
+            return $data->Gits();
     }
 
     return [];
@@ -341,7 +348,7 @@ function zberOne_GetTabOneList($kind, $type)
 /**
  * 单个组面板：点左栏组标题（dt）时显示的那个.
  *
- * 信息组渲染数据源本身的字段行（无子项）；说说 / 文章 / 视频渲染该组的子项列表。
+ * 信息组渲染数据源本身的字段行（无子项）；说说 / 文章 / 视频 / 仓库渲染该组的子项列表。
  * 只读该类型自己的数据，不牵连其它类型。
  *
  * 面板字段：
@@ -361,7 +368,7 @@ function zberOne_GetTabOneList($kind, $type)
  * （前端拿它把这块面板换成编辑态），点「添加」时不带。
  *
  * @param string $kind 数据来源
- * @param string $type 子级项目（one / toot / post / video）
+ * @param string $type 子级项目（one / toot / post / video / git）
  *
  * @return null|array 来源或类型无效时返回 null
  */
@@ -448,7 +455,7 @@ function zberOne_GetTabOneGroupPanel($kind, $type)
  * 只有「我」有写入入口，「他人」返回 null。
  *
  * @param string   $kind 数据来源
- * @param string   $type 子级项目（one / toot / post / video）
+ * @param string   $type 子级项目（one / toot / post / video / git）
  * @param null|int $idx  要编辑的序号；省略 = 新增态
  *
  * @return null|array 来源 / 类型无效、不是「我」，或序号越界时返回 null
@@ -522,12 +529,12 @@ function zberOne_GetTabOneForm($kind, $type, $idx = null)
  * 这里只给出 formPanel（表单面板 id）与 editIdx（该条序号）供前端切到编辑态。
  *
  * 面板字段：id / type / tpl / active / head / idx / editIdx / formPanel / delUrl，
- *   说说另有 text + meta，文章 / 视频另有 url + meta（发布时间，缺失显示 —）。
+ *   说说另有 text + meta，文章 / 视频 / 仓库另有 url + meta（发布时间，缺失显示 —）。
  *   editIdx 给「编辑」入口用（换成编辑态时带的序号）；formIdx 恒为 null ——
  *   展示面板不代表编辑态，别让前端把它当成「已经是编辑某条的态」。
  *
  * @param string $kind 数据来源
- * @param string $type 子级项目（toot / post / video；信息没有条目级面板）
+ * @param string $type 子级项目（toot / post / video / git；信息没有条目级面板）
  * @param int    $idx  子项序号
  *
  * @return null|array 来源 / 类型无效或数据不存在时返回 null
@@ -846,6 +853,8 @@ function zberOne_Ajax()
                 $ok = $data->AddPost($fields);
             } elseif (zberOne_base::TYPE_VIDEO === $type) {
                 $ok = $data->AddVideo($fields);
+            } elseif (zberOne_base::TYPE_GIT === $type) {
+                $ok = $data->AddGit($fields);
             }
             $message = $ok ? '添加成功' : '添加失败';
         } elseif ('update' === $act) {
@@ -858,6 +867,8 @@ function zberOne_Ajax()
                     $ok = $data->UpdatePost($idx, $fields);
                 } elseif (zberOne_base::TYPE_VIDEO === $type) {
                     $ok = $data->UpdateVideo($idx, $fields);
+                } elseif (zberOne_base::TYPE_GIT === $type) {
+                    $ok = $data->UpdateGit($idx, $fields);
                 }
             }
             $message = $ok ? '编辑成功' : '编辑失败';
@@ -873,6 +884,8 @@ function zberOne_Ajax()
                     $ok = $data->DeletePost($idx);
                 } elseif (zberOne_base::TYPE_VIDEO === $type) {
                     $ok = $data->DeleteVideo($idx);
+                } elseif (zberOne_base::TYPE_GIT === $type) {
+                    $ok = $data->DeleteGit($idx);
                 }
                 $message = $ok ? '删除成功' : '删除失败';
             }
