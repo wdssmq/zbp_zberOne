@@ -20,12 +20,6 @@ jobs:
         with:
           fetch-depth: 10
 
-      - name: Setup PHP Environment
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: "8.2"
-          extensions: zlib, simplexml, json
-
       - name: Extract Plugin ID
         id: plugin
         shell: bash
@@ -116,6 +110,13 @@ jobs:
 
           echo "::notice::检测到 $VERSION_FILE 版本变更为 $VERSION，将创建 tag $TAG_NAME 并发布"
           write_out
+
+      - name: Setup PHP Environment
+        if: steps.meta.outputs.skip != 'true'
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.2"
+          extensions: zlib, simplexml, json
 
       - name: Pack ZBA Application
         id: pack
