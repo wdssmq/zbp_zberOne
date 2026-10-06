@@ -120,6 +120,10 @@ function zberOne_LoadHubOther()
     $http = null;
     if (class_exists('Network')) {
         $http = Network::Create();
+        // 与下方 file_get_contents 兜底一致设 3 秒超时，远站无响应时不至于卡住后台页面
+        if (method_exists($http, 'setTimeOuts')) {
+            $http->setTimeOuts(3, 3);
+        }
         $http->open('GET', $pubUrl);
         $http->send();
         if (200 == $http->status) {
