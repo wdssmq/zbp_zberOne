@@ -95,6 +95,13 @@ if (!class_exists('zberOne_base')) {
         private $pubUrl = '';
 
         /**
+         * 并发写互斥锁的文件句柄（usr-data/.lock），未加锁时为 null。
+         *
+         * @var null|resource
+         */
+        private $lockHandle = null;
+
+        /**
          * 外部注入的「他人」数据（按类型，请求内有效）。
          *
          * 由 zberOne_LoadHubOther() 从远程发布文件拉取后经 SetOtherData() 注入；
@@ -436,6 +443,51 @@ if (!class_exists('zberOne_base')) {
             return $this->SaveOne($this->pick(self::TYPE_ONE, $data));
         }
 
+        /* ---------- 并发写互斥锁（读-改-写整份列表的区间内持有） ---------- */
+
+        /**
+         * 加并发写互斥锁（sidecar 锁文件 usr-data/.lock + flock 排他锁）.
+         *
+         * 尽力互斥而非硬失败：锁文件不可创建 / flock 不可用时返回 false，
+         * 调用方照常执行写盘（tmp + rename 原子兜底），只是并发下可能后写覆盖先写。
+         *
+         * @return bool 加锁成功返回 true
+         */
+        private function lock()
+        {
+            if (null !== $this->lockHandle) {
+                return true;
+            }
+            if (!is_dir($this->dataDir) && !@mkdir($this->dataDir, 0755, true) && !is_dir($this->dataDir)) {
+                return false;
+            }
+            $handle = @fopen($this->dataDir . '/.lock', 'c');
+            if (false === $handle) {
+                return false;
+            }
+            if (!@flock($handle, LOCK_EX)) {
+                @fclose($handle);
+
+                return false;
+            }
+            $this->lockHandle = $handle;
+
+            return true;
+        }
+
+        /**
+         * 解除并发写互斥锁（幂等，未加锁时无操作）.
+         */
+        private function unlock()
+        {
+            if (null === $this->lockHandle) {
+                return;
+            }
+            @flock($this->lockHandle, LOCK_UN);
+            @fclose($this->lockHandle);
+            $this->lockHandle = null;
+        }
+
         /* ---------- 通用列表写操作（toot / post / video / git 共用） ---------- */
 
         /**
@@ -454,12 +506,15 @@ if (!class_exists('zberOne_base')) {
             if (!in_array($type, self::$types, true) || self::TYPE_ONE === $type) {
                 return false;
             }
+            $this->lock();
             $list = $this->Load($type);
             $item = $this->pick($type, $data);
             $item['created_at'] = date('Y-m-d H:i:s');
             $list[] = $item;
+            $ok = $this->Save($type, array_values($list));
+            $this->unlock();
 
-            return $this->Save($type, array_values($list));
+            return $ok;
         }
 
         /**
@@ -479,16 +534,21 @@ if (!class_exists('zberOne_base')) {
             if (!in_array($type, self::$types, true) || self::TYPE_ONE === $type) {
                 return false;
             }
+            $this->lock();
             $list = $this->Load($type);
             $idx = (int) $idx;
             if (!isset($list[$idx])) {
+                $this->unlock();
+
                 return false;
             }
             $item = $this->pick($type, $data);
             $item['created_at'] = date('Y-m-d H:i:s');
             $list[$idx] = $item;
+            $ok = $this->Save($type, array_values($list));
+            $this->unlock();
 
-            return $this->Save($type, array_values($list));
+            return $ok;
         }
 
         /**
@@ -506,14 +566,19 @@ if (!class_exists('zberOne_base')) {
             if (!in_array($type, self::$types, true) || self::TYPE_ONE === $type) {
                 return false;
             }
+            $this->lock();
             $list = $this->Load($type);
             $idx = (int) $idx;
             if (!isset($list[$idx])) {
+                $this->unlock();
+
                 return false;
             }
             unset($list[$idx]);
+            $ok = $this->Save($type, array_values($list));
+            $this->unlock();
 
-            return $this->Save($type, array_values($list));
+            return $ok;
         }
 
         /* ---------- 各类型薄封装（对外兼容，逻辑收敛在上方通用方法） ---------- */
