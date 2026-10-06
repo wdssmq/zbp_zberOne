@@ -167,7 +167,8 @@ function zberOneTab_TootTitle($toot)
         return mb_strlen($text) > 24 ? mb_substr($text, 0, 24) . '…' : $text;
     }
 
-    return strlen($text) > 48 ? substr($text, 0, 48) . '…' : $text;
+    // 无 mbstring 时宁长勿乱码：直接返回原文不截断
+    return $text;
 }
 
 /**
