@@ -697,17 +697,11 @@ if (!class_exists('zberOne_base')) {
         }
 
         /**
-         * 写入后同步 one 到 pub-data/：生成 `<id>.json`（含 url），id 缺失则不生成。
+         * 发布 one 到 pub-data/：生成 `<id>.json`（整合全部 usr-data + url），id 缺失则不生成.
          *
-         * 仅对「我」生效；id 由旧值变为不同非空值时先清理旧文件。
-         *
-         * @param string $oldId 写入前的 one.id（用于清理旧发布文件）
-         */
-        /**
-         * 发布 one 到 pub-data/：生成 `<id>.json`（整合全部 usr-data + url），id 缺失则不生成。
-         *
-         * 在 SaveOne 写入成功后由调用方触发；$oldId 为写入前的 one.id，用于 id 变更时清理旧文件。
-         * 仅对「我」生效；id 缺失时不生成（不管旧文件）。
+         * 在写操作成功后由调用方触发（见 zberOne_Ajax）。仅对「我」生效。
+         * 注意：one.id 变更时不会清理 pub-data/ 下的旧 `<旧id>.json`，
+         * 旧文件会残留并继续可被拉取，变更 id 后需手动删除旧文件。
          */
         public function PublishOne()
         {
