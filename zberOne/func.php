@@ -82,7 +82,10 @@ function zberOne_LoadHubOther()
     }
     $id = isset($item['id']) ? basename(trim((string) $item['id'])) : '';
     $url = isset($item['url']) ? trim((string) $item['url']) : '';
-    if ('' === $id || preg_match('/^\.+$/', $id) || '' === $url || 0 !== strpos($url, 'http')) {
+    // 严格校验：URL 合法且 scheme 限 http/https（单纯 filter_var 接受任意 scheme）
+    $urlOk = false !== filter_var($url, FILTER_VALIDATE_URL)
+        && in_array((string) parse_url($url, PHP_URL_SCHEME), ['http', 'https'], true);
+    if ('' === $id || preg_match('/^\.+$/', $id) || '' === $url || !$urlOk) {
         return null;
     }
 
