@@ -907,7 +907,7 @@ function zberOne_ReadPostFields($type)
  * - toot：无额外校验
  * - delete 操作不提交表单，调用方跳过本校验
  *
- * @param string $type  数据类型
+ * @param string $type   数据类型
  * @param array  $fields zberOne_ReadPostFields 的产出
  *
  * @return string
