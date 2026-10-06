@@ -899,6 +899,42 @@ function zberOne_ReadPostFields($type)
 }
 
 /**
+ * 写操作提交字段的服务端校验：返回空串表示通过，否则返回错误消息.
+ *
+ * - post / video / git：url 不能为空，且必须是合法的 http/https 链接
+ * - one：id 可空（空则不生成发布文件，见 PublishOne），
+ *   非空时仅允许字母、数字、下划线和连字符
+ * - toot：无额外校验
+ * - delete 操作不提交表单，调用方跳过本校验
+ *
+ * @param string $type  数据类型
+ * @param array  $fields zberOne_ReadPostFields 的产出
+ *
+ * @return string
+ */
+function zberOne_ValidateFields($type, $fields)
+{
+    if (in_array($type, [zberOne_base::TYPE_POST, zberOne_base::TYPE_VIDEO, zberOne_base::TYPE_GIT], true)) {
+        $url = isset($fields['url']) ? trim((string) $fields['url']) : '';
+        if ('' === $url) {
+            return '链接不能为空';
+        }
+        $urlOk = false !== filter_var($url, FILTER_VALIDATE_URL)
+            && in_array((string) parse_url($url, PHP_URL_SCHEME), ['http', 'https'], true);
+        if (!$urlOk) {
+            return '链接格式不正确';
+        }
+    } elseif (zberOne_base::TYPE_ONE === $type) {
+        $id = isset($fields['id']) ? trim((string) $fields['id']) : '';
+        if ('' !== $id && !preg_match('/^[A-Za-z0-9_-]+$/', $id)) {
+            return 'ID 仅允许字母、数字、下划线和连字符';
+        }
+    }
+
+    return '';
+}
+
+/**
  * cmd.php ajax 入口（act=ajax&src=zberOne）：权限与 CSRF 校验后分派，按内置 JsonReturn/JsonError 输出.
  *
  * cmd.php 的 ajax 动作只要求访客级权限，写操作必须在这里自行补校验。
@@ -977,7 +1013,11 @@ function zberOne_Ajax()
         $idx = (null === $idxRaw || '' === $idxRaw) ? null : (int) $idxRaw;
         $fields = zberOne_ReadPostFields($type);
 
-        if ('add' === $act) {
+        // 服务端字段校验（add / update 提交表单；delete 不带表单字段，跳过）
+        $invalid = in_array($act, ['add', 'update'], true) ? zberOne_ValidateFields($type, $fields) : '';
+        if ('' !== $invalid) {
+            $message = $invalid;
+        } elseif ('add' === $act) {
             if (zberOne_base::TYPE_ONE === $type) {
                 $ok = $data->AddOne($fields);
             } elseif (zberOne_base::TYPE_TOOT === $type) {
