@@ -986,6 +986,8 @@ function zberOne_CmdAjax($src)
  * ajax 业务分派：按 op 执行新增 / 编辑 / 删除，返回重渲染后的整栏 HTML.
  *
  * op / kind / type / idx 走 URL 查询串（GET），表单字段走 POST 主体。
+ * 写方法按类型动态派发（'Add'/'Update'/'Delete' . ucfirst($type)），
+ * one 的编辑无序号、不支持删除，走分支内的特殊处理。
  *
  * @return array ['ok' => bool, 'message' => string, 'sidebar' => html, 'main' => html, 'activePanel' => id]
  */
@@ -1018,31 +1020,17 @@ function zberOne_Ajax()
         if ('' !== $invalid) {
             $message = $invalid;
         } elseif ('add' === $act) {
-            if (zberOne_base::TYPE_ONE === $type) {
-                $ok = $data->AddOne($fields);
-            } elseif (zberOne_base::TYPE_TOOT === $type) {
-                $ok = $data->AddToot($fields);
-            } elseif (zberOne_base::TYPE_POST === $type) {
-                $ok = $data->AddPost($fields);
-            } elseif (zberOne_base::TYPE_VIDEO === $type) {
-                $ok = $data->AddVideo($fields);
-            } elseif (zberOne_base::TYPE_GIT === $type) {
-                $ok = $data->AddGit($fields);
+            $method = 'Add' . ucfirst($type);
+            if (method_exists($data, $method)) {
+                $ok = $data->{$method}($fields);
             }
             $message = $ok ? '添加成功' : '添加失败';
         } elseif ('update' === $act) {
+            $method = 'Update' . ucfirst($type);
             if (zberOne_base::TYPE_ONE === $type) {
                 $ok = $data->UpdateOne($fields);
-            } elseif (null !== $idx) {
-                if (zberOne_base::TYPE_TOOT === $type) {
-                    $ok = $data->UpdateToot($idx, $fields);
-                } elseif (zberOne_base::TYPE_POST === $type) {
-                    $ok = $data->UpdatePost($idx, $fields);
-                } elseif (zberOne_base::TYPE_VIDEO === $type) {
-                    $ok = $data->UpdateVideo($idx, $fields);
-                } elseif (zberOne_base::TYPE_GIT === $type) {
-                    $ok = $data->UpdateGit($idx, $fields);
-                }
+            } elseif (null !== $idx && method_exists($data, $method)) {
+                $ok = $data->{$method}($idx, $fields);
             }
             $message = $ok ? '编辑成功' : '编辑失败';
         } elseif ('delete' === $act) {
@@ -1051,14 +1039,9 @@ function zberOne_Ajax()
             } elseif (null === $idx) {
                 $message = '缺少序号';
             } else {
-                if (zberOne_base::TYPE_TOOT === $type) {
-                    $ok = $data->DeleteToot($idx);
-                } elseif (zberOne_base::TYPE_POST === $type) {
-                    $ok = $data->DeletePost($idx);
-                } elseif (zberOne_base::TYPE_VIDEO === $type) {
-                    $ok = $data->DeleteVideo($idx);
-                } elseif (zberOne_base::TYPE_GIT === $type) {
-                    $ok = $data->DeleteGit($idx);
+                $method = 'Delete' . ucfirst($type);
+                if (method_exists($data, $method)) {
+                    $ok = $data->{$method}($idx);
                 }
                 $message = $ok ? '删除成功' : '删除失败';
             }
