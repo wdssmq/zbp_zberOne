@@ -21,7 +21,6 @@ function zberOne_Path($file = '', $t = 'path')
     static $paths = [
         'main' => 'main.php',
         'tpl' => 'tpl/',
-        'u-data' => 'usr-data/',
     ];
     $base = $zbp->{$t} . 'zb_users/plugin/zberOne/';
 
