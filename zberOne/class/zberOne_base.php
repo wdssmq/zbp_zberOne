@@ -436,10 +436,90 @@ if (!class_exists('zberOne_base')) {
             return $this->SaveOne($this->pick(self::TYPE_ONE, $data));
         }
 
+        /* ---------- 通用列表写操作（toot / post / video / git 共用） ---------- */
+
         /**
-         * 追加一条「说说」。
+         * 追加一条指定类型的数据（toot / post / video / git）.
          *
          * 发布时间由服务端在写入时确定，不接受调用方传入。
+         * one 是单对象没有追加概念，不走本方法（见 AddOne）。
+         *
+         * @param string     $type
+         * @param null|array $data
+         *
+         * @return bool 类型无效时返回 false
+         */
+        public function AddItem($type, $data = null)
+        {
+            if (!in_array($type, self::$types, true) || self::TYPE_ONE === $type) {
+                return false;
+            }
+            $list = $this->Load($type);
+            $item = $this->pick($type, $data);
+            $item['created_at'] = date('Y-m-d H:i:s');
+            $list[] = $item;
+
+            return $this->Save($type, array_values($list));
+        }
+
+        /**
+         * 修改指定类型第 $idx 条数据（toot / post / video / git）.
+         *
+         * 发布时间由服务端在写入时刷新，不接受调用方传入。
+         * 序号越界（数据刚被改过或删掉）返回 false。
+         *
+         * @param string     $type
+         * @param int        $idx  序号
+         * @param null|array $data
+         *
+         * @return bool 类型无效时返回 false
+         */
+        public function UpdateItem($type, $idx, $data = null)
+        {
+            if (!in_array($type, self::$types, true) || self::TYPE_ONE === $type) {
+                return false;
+            }
+            $list = $this->Load($type);
+            $idx = (int) $idx;
+            if (!isset($list[$idx])) {
+                return false;
+            }
+            $item = $this->pick($type, $data);
+            $item['created_at'] = date('Y-m-d H:i:s');
+            $list[$idx] = $item;
+
+            return $this->Save($type, array_values($list));
+        }
+
+        /**
+         * 删除指定类型第 $idx 条数据（toot / post / video / git）.
+         *
+         * 序号越界（数据刚被改过或删掉）返回 false。
+         *
+         * @param string $type
+         * @param int    $idx 序号
+         *
+         * @return bool 类型无效时返回 false
+         */
+        public function DeleteItem($type, $idx)
+        {
+            if (!in_array($type, self::$types, true) || self::TYPE_ONE === $type) {
+                return false;
+            }
+            $list = $this->Load($type);
+            $idx = (int) $idx;
+            if (!isset($list[$idx])) {
+                return false;
+            }
+            unset($list[$idx]);
+
+            return $this->Save($type, array_values($list));
+        }
+
+        /* ---------- 各类型薄封装（对外兼容，逻辑收敛在上方通用方法） ---------- */
+
+        /**
+         * 追加一条「说说」（见 AddItem）。
          *
          * @param null|array $data
          *
@@ -447,18 +527,11 @@ if (!class_exists('zberOne_base')) {
          */
         public function AddToot($data = null)
         {
-            $list = $this->Toots();
-            $item = $this->pick(self::TYPE_TOOT, $data);
-            $item['created_at'] = date('Y-m-d H:i:s');
-            $list[] = $item;
-
-            return $this->SaveToots(array_values($list));
+            return $this->AddItem(self::TYPE_TOOT, $data);
         }
 
         /**
-         * 追加一条「文章」。
-         *
-         * 发布时间由服务端在写入时确定，不接受调用方传入。
+         * 追加一条「文章」（见 AddItem）。
          *
          * @param null|array $data
          *
@@ -466,18 +539,11 @@ if (!class_exists('zberOne_base')) {
          */
         public function AddPost($data = null)
         {
-            $list = $this->Posts();
-            $item = $this->pick(self::TYPE_POST, $data);
-            $item['created_at'] = date('Y-m-d H:i:s');
-            $list[] = $item;
-
-            return $this->SavePosts(array_values($list));
+            return $this->AddItem(self::TYPE_POST, $data);
         }
 
         /**
-         * 追加一条「视频」。
-         *
-         * 发布时间由服务端在写入时确定，不接受调用方传入。
+         * 追加一条「视频」（见 AddItem）。
          *
          * @param null|array $data
          *
@@ -485,18 +551,11 @@ if (!class_exists('zberOne_base')) {
          */
         public function AddVideo($data = null)
         {
-            $list = $this->Videos();
-            $item = $this->pick(self::TYPE_VIDEO, $data);
-            $item['created_at'] = date('Y-m-d H:i:s');
-            $list[] = $item;
-
-            return $this->SaveVideos(array_values($list));
+            return $this->AddItem(self::TYPE_VIDEO, $data);
         }
 
         /**
-         * 追加一条「仓库」。
-         *
-         * 发布时间由服务端在写入时确定，不接受调用方传入。
+         * 追加一条「仓库」（见 AddItem）。
          *
          * @param null|array $data
          *
@@ -504,12 +563,7 @@ if (!class_exists('zberOne_base')) {
          */
         public function AddGit($data = null)
         {
-            $list = $this->Gits();
-            $item = $this->pick(self::TYPE_GIT, $data);
-            $item['created_at'] = date('Y-m-d H:i:s');
-            $list[] = $item;
-
-            return $this->SaveGits(array_values($list));
+            return $this->AddItem(self::TYPE_GIT, $data);
         }
 
         /**
@@ -525,9 +579,7 @@ if (!class_exists('zberOne_base')) {
         }
 
         /**
-         * 修改第 $idx 条「说说」。
-         *
-         * 发布时间由服务端在写入时刷新，不接受调用方传入。
+         * 修改第 $idx 条「说说」（见 UpdateItem）。
          *
          * @param int        $idx  序号
          * @param null|array $data
@@ -536,22 +588,11 @@ if (!class_exists('zberOne_base')) {
          */
         public function UpdateToot($idx, $data = null)
         {
-            $list = $this->Toots();
-            $idx = (int) $idx;
-            if (!isset($list[$idx])) {
-                return false;
-            }
-            $item = $this->pick(self::TYPE_TOOT, $data);
-            $item['created_at'] = date('Y-m-d H:i:s');
-            $list[$idx] = $item;
-
-            return $this->SaveToots(array_values($list));
+            return $this->UpdateItem(self::TYPE_TOOT, $idx, $data);
         }
 
         /**
-         * 修改第 $idx 条「文章」。
-         *
-         * 发布时间由服务端在写入时刷新，不接受调用方传入。
+         * 修改第 $idx 条「文章」（见 UpdateItem）。
          *
          * @param int        $idx  序号
          * @param null|array $data
@@ -560,22 +601,11 @@ if (!class_exists('zberOne_base')) {
          */
         public function UpdatePost($idx, $data = null)
         {
-            $list = $this->Posts();
-            $idx = (int) $idx;
-            if (!isset($list[$idx])) {
-                return false;
-            }
-            $item = $this->pick(self::TYPE_POST, $data);
-            $item['created_at'] = date('Y-m-d H:i:s');
-            $list[$idx] = $item;
-
-            return $this->SavePosts(array_values($list));
+            return $this->UpdateItem(self::TYPE_POST, $idx, $data);
         }
 
         /**
-         * 修改第 $idx 条「视频」。
-         *
-         * 发布时间由服务端在写入时刷新，不接受调用方传入。
+         * 修改第 $idx 条「视频」（见 UpdateItem）。
          *
          * @param int        $idx  序号
          * @param null|array $data
@@ -584,22 +614,11 @@ if (!class_exists('zberOne_base')) {
          */
         public function UpdateVideo($idx, $data = null)
         {
-            $list = $this->Videos();
-            $idx = (int) $idx;
-            if (!isset($list[$idx])) {
-                return false;
-            }
-            $item = $this->pick(self::TYPE_VIDEO, $data);
-            $item['created_at'] = date('Y-m-d H:i:s');
-            $list[$idx] = $item;
-
-            return $this->SaveVideos(array_values($list));
+            return $this->UpdateItem(self::TYPE_VIDEO, $idx, $data);
         }
 
         /**
-         * 修改第 $idx 条「仓库」。
-         *
-         * 发布时间由服务端在写入时刷新，不接受调用方传入。
+         * 修改第 $idx 条「仓库」（见 UpdateItem）。
          *
          * @param int        $idx  序号
          * @param null|array $data
@@ -608,20 +627,11 @@ if (!class_exists('zberOne_base')) {
          */
         public function UpdateGit($idx, $data = null)
         {
-            $list = $this->Gits();
-            $idx = (int) $idx;
-            if (!isset($list[$idx])) {
-                return false;
-            }
-            $item = $this->pick(self::TYPE_GIT, $data);
-            $item['created_at'] = date('Y-m-d H:i:s');
-            $list[$idx] = $item;
-
-            return $this->SaveGits(array_values($list));
+            return $this->UpdateItem(self::TYPE_GIT, $idx, $data);
         }
 
         /**
-         * 删除第 $idx 条「说说」。
+         * 删除第 $idx 条「说说」（见 DeleteItem）。
          *
          * @param int $idx 序号
          *
@@ -629,18 +639,11 @@ if (!class_exists('zberOne_base')) {
          */
         public function DeleteToot($idx)
         {
-            $list = $this->Toots();
-            $idx = (int) $idx;
-            if (!isset($list[$idx])) {
-                return false;
-            }
-            unset($list[$idx]);
-
-            return $this->SaveToots(array_values($list));
+            return $this->DeleteItem(self::TYPE_TOOT, $idx);
         }
 
         /**
-         * 删除第 $idx 条「文章」。
+         * 删除第 $idx 条「文章」（见 DeleteItem）。
          *
          * @param int $idx 序号
          *
@@ -648,18 +651,11 @@ if (!class_exists('zberOne_base')) {
          */
         public function DeletePost($idx)
         {
-            $list = $this->Posts();
-            $idx = (int) $idx;
-            if (!isset($list[$idx])) {
-                return false;
-            }
-            unset($list[$idx]);
-
-            return $this->SavePosts(array_values($list));
+            return $this->DeleteItem(self::TYPE_POST, $idx);
         }
 
         /**
-         * 删除第 $idx 条「视频」。
+         * 删除第 $idx 条「视频」（见 DeleteItem）。
          *
          * @param int $idx 序号
          *
@@ -667,18 +663,11 @@ if (!class_exists('zberOne_base')) {
          */
         public function DeleteVideo($idx)
         {
-            $list = $this->Videos();
-            $idx = (int) $idx;
-            if (!isset($list[$idx])) {
-                return false;
-            }
-            unset($list[$idx]);
-
-            return $this->SaveVideos(array_values($list));
+            return $this->DeleteItem(self::TYPE_VIDEO, $idx);
         }
 
         /**
-         * 删除第 $idx 条「仓库」。
+         * 删除第 $idx 条「仓库」（见 DeleteItem）。
          *
          * @param int $idx 序号
          *
@@ -686,14 +675,7 @@ if (!class_exists('zberOne_base')) {
          */
         public function DeleteGit($idx)
         {
-            $list = $this->Gits();
-            $idx = (int) $idx;
-            if (!isset($list[$idx])) {
-                return false;
-            }
-            unset($list[$idx]);
-
-            return $this->SaveGits(array_values($list));
+            return $this->DeleteItem(self::TYPE_GIT, $idx);
         }
 
         /**
