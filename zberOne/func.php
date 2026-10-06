@@ -101,8 +101,10 @@ function zberOne_LoadHubOther()
     $cache = null;
     if (is_readable($cacheFile)) {
         $tmp = json_decode((string) @file_get_contents($cacheFile), true);
-        if (is_array($tmp) && isset($tmp['lstTime'], $tmp['pub']) && is_array($tmp['pub'])
-            && (time() - (int) $tmp['lstTime']) < $ttl) {
+        if (!is_array($tmp) || !isset($tmp['lstTime'], $tmp['pub']) || !is_array($tmp['pub'])) {
+            // 缓存损坏（半截写入 / 磁盘问题）：删掉，下次重新拉取
+            @unlink($cacheFile);
+        } elseif ((time() - (int) $tmp['lstTime']) < $ttl) {
             $cache = $tmp;
         }
     }
